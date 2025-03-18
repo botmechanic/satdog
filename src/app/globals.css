@@ -37,3 +37,17 @@ body {
 .animate-orbit {
   animation: orbit 15s linear infinite;
 }
+
+@keyframes pulse {
+  0% {
+    opacity: 0.05;
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 0.1;
+    transform: scale(1.2) rotate(15deg);
+  }
+}
