@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, Suspense } from 'react';
+import { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Stats, KeyboardControls } from '@react-three/drei';
 import Planet from './Planet';
@@ -12,10 +12,6 @@ import TitleScreen from './TitleScreen';
 import { GameProvider } from '@/contexts/GameContext';
 
 export default function GameComponent() {
-  const handleStartGame = () => {
-    // This is now handled through the game context
-  };
-  
   return (
     <KeyboardControls
       map={[
@@ -53,7 +49,7 @@ export default function GameComponent() {
           </Canvas>
           <AssemblyUI />
           <ControlsInfo />
-          <TitleScreen onStart={handleStartGame} />
+          <TitleScreen />
         </div>
       </GameProvider>
     </KeyboardControls>

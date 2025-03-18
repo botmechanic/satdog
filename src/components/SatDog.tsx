@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { useKeyboardControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { useGame } from '@/contexts/GameContext';
@@ -22,7 +22,7 @@ export default function SatDog() {
     if (!dogRef.current || gameState !== 'playing' || showTitle) return;
     
     // Get keyboard state
-    const { forward, backward, left, right, jump } = getKeyboardControls() as any;
+    const { forward, backward, left, right, jump } = getKeyboardControls() as { forward: boolean; backward: boolean; left: boolean; right: boolean; jump: boolean };
     
     // Calculate direction relative to the camera
     const camera = state.camera;

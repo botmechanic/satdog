@@ -1,20 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import React from 'react';
 import { useGame } from '@/contexts/GameContext';
 
-interface TitleScreenProps {
-  onStart: () => void;
-}
-
-export default function TitleScreen({ onStart }: TitleScreenProps) {
+export default function TitleScreen() {
   const { showTitle, setShowTitle } = useGame();
   
   if (!showTitle) return null;
   
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black text-white z-50">
-      <h1 className="text-5xl font-bold mb-4 text-yellow-400">SatDog's Signal Snap</h1>
+      <h1 className="text-5xl font-bold mb-4 text-yellow-400">SatDog&apos;s Signal Snap</h1>
       
       <div className="w-32 h-32 relative my-8">
         <div className="absolute w-full h-full rounded-full border-4 border-dashed border-blue-300 animate-spin" style={{ animationDuration: '20s' }}></div>
