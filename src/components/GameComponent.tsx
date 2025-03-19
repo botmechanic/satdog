@@ -9,7 +9,10 @@ import Components from './Components';
 import AssemblyUI from './AssemblyUI';
 import ControlsInfo from './ControlsInfo';
 import TitleScreen from './TitleScreen';
+import UsernameInput from './UsernameInput';
+import OtherPlayers from './OtherPlayers';
 import { GameProvider } from '@/contexts/GameContext';
+import { MultiplayerProvider } from '@/contexts/MultiplayerContext';
 import * as THREE from 'three';
 
 // Camera that follows the player on flat terrain
@@ -67,38 +70,42 @@ export default function GameComponent() {
         { name: 'jump', keys: ['Space'] }
       ]}
     >
-      <GameProvider>
-        <div className="relative w-full h-full">
-          <Canvas shadows camera={{ position: [0, 6, 10], fov: 50 }}>
-            <color attach="background" args={['#000020']} />
-            <ambientLight intensity={0.7} />
-            <directionalLight
-              position={[10, 15, 10]}
-              intensity={0.8}
-              castShadow
-              shadow-mapSize-width={1024}
-              shadow-mapSize-height={1024}
-              shadow-camera-far={50}
-              shadow-camera-left={-20}
-              shadow-camera-right={20}
-              shadow-camera-top={20}
-              shadow-camera-bottom={-20}
-            />
-            <pointLight position={[0, 6, 0]} intensity={0.7} color="#ffffff" />
-            <spotLight position={[0, 10, 0]} angle={0.6} penumbra={0.6} intensity={0.8} castShadow />
-            <Suspense fallback={null}>
-              <Planet />
-              <SatDog ref={playerRef} />
-              <Components />
-              <FollowCamera playerRef={playerRef} />
-            </Suspense>
-            <Stats />
-          </Canvas>
-          <AssemblyUI />
-          <ControlsInfo />
-          <TitleScreen />
-        </div>
-      </GameProvider>
+      <MultiplayerProvider>
+        <GameProvider>
+          <div className="relative w-full h-full">
+            <Canvas shadows camera={{ position: [0, 6, 10], fov: 50 }}>
+              <color attach="background" args={['#000020']} />
+              <ambientLight intensity={0.7} />
+              <directionalLight
+                position={[10, 15, 10]}
+                intensity={0.8}
+                castShadow
+                shadow-mapSize-width={1024}
+                shadow-mapSize-height={1024}
+                shadow-camera-far={50}
+                shadow-camera-left={-20}
+                shadow-camera-right={20}
+                shadow-camera-top={20}
+                shadow-camera-bottom={-20}
+              />
+              <pointLight position={[0, 6, 0]} intensity={0.7} color="#ffffff" />
+              <spotLight position={[0, 10, 0]} angle={0.6} penumbra={0.6} intensity={0.8} castShadow />
+              <Suspense fallback={null}>
+                <Planet />
+                <SatDog ref={playerRef} />
+                <OtherPlayers />
+                <Components />
+                <FollowCamera playerRef={playerRef} />
+              </Suspense>
+              <Stats />
+            </Canvas>
+            <AssemblyUI />
+            <ControlsInfo />
+            <TitleScreen />
+            <UsernameInput />
+          </div>
+        </GameProvider>
+      </MultiplayerProvider>
     </KeyboardControls>
   );
 }

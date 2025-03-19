@@ -2,9 +2,11 @@
 
 import React from 'react';
 import { useGame } from '@/contexts/GameContext';
+import { useMultiplayer } from '@/contexts/MultiplayerContext';
 
 export default function TitleScreen() {
   const { showTitle, setShowTitle } = useGame();
+  const { hasJoinedGame, joinGame } = useMultiplayer();
   
   if (!showTitle) return null;
   
@@ -72,10 +74,20 @@ export default function TitleScreen() {
       
       <button 
         className="px-10 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition text-xl font-bold shadow-lg shadow-green-500/30 transform hover:scale-105"
-        onClick={() => setShowTitle(false)}
+        onClick={() => {
+          setShowTitle(false);
+          // If already joined the game via username input, don't ask again
+          if (!hasJoinedGame) {
+            joinGame();
+          }
+        }}
       >
         Start Mission!
       </button>
+      
+      <p className="mt-4 text-blue-200">
+        <span className="font-bold">⚡ NEW:</span> Multiplayer mode enabled! Explore with other players.
+      </p>
     </div>
   );
 }

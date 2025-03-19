@@ -5,6 +5,7 @@ import { useFrame } from '@react-three/fiber';
 import { useKeyboardControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { useGame } from '@/contexts/GameContext';
+import { useMultiplayer } from '@/contexts/MultiplayerContext';
 
 const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
   const dogRef = useRef<THREE.Group>(null);
@@ -33,7 +34,8 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
   const PLATFORM_WIDTH = 20;
   const PLATFORM_LENGTH = 20;
   
-  const { components, collectComponent, gameState, showTitle, collectedComponents } = useGame();
+  const { components, collectComponent: gameCollectComponent, gameState, showTitle, collectedComponents } = useGame();
+  const { collectComponent: multiplayerCollectComponent } = useMultiplayer();
 
   // Set up keyboard controls for WASD and Space
   const [, getKeyboardControls] = useKeyboardControls();
@@ -60,6 +62,9 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
       return () => clearTimeout(timeout);
     }
   }, [collectedComponents.length, isWaggingTail]);
+  
+  // Import the multiplayer context
+  const { updatePlayerPosition } = useMultiplayer();
   
   useFrame((state, delta) => {
     if (!dogRef.current || gameState !== 'playing' || showTitle) return;
@@ -256,11 +261,24 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
     dogRef.current.position.copy(newPosition);
     
     // Make SatDog look in the direction of movement
+    let rotation = dogRef.current.rotation.y;
     if (moveDirection.length() > 0.1) {
       // Calculate rotation to face movement direction (much simpler for flat terrain)
-      const angle = Math.atan2(moveDirection.x, moveDirection.z);
-      dogRef.current.rotation.y = angle;
+      rotation = Math.atan2(moveDirection.x, moveDirection.z);
+      dogRef.current.rotation.y = rotation;
     }
+    
+    // Send position update to server
+    updatePlayerPosition(
+      { 
+        x: newPosition.x, 
+        y: newPosition.y, 
+        z: newPosition.z 
+      },
+      rotation,
+      isMoving,
+      isJumping
+    );
     
     // Animate legs when moving
     if (isMoving && onGround && 
@@ -301,7 +319,8 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
         const distance = newPosition.distanceTo(componentPos);
         
         if (distance < 1.5) {
-          collectComponent(component.type);
+          gameCollectComponent(component.type);
+          multiplayerCollectComponent(component.type);
         }
       }
     });
