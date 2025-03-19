@@ -87,7 +87,7 @@ export default function SatDog() {
     const sideVector = new THREE.Vector3((left ? 1 : 0) - (right ? 1 : 0), 0, 0);
     direction.subVectors(frontVector, sideVector)
       .normalize()
-      .multiplyScalar(delta * 5);
+      .multiplyScalar(delta * 2); // Reduced from 5 to 2 for slower movement
       
     // Apply camera's Y-rotation to movement direction
     direction.applyAxisAngle(new THREE.Vector3(0, 1, 0), camera.rotation.y);
@@ -110,14 +110,14 @@ export default function SatDog() {
     
     // Jump
     if (jump && onGround) {
-      newVelocity.y = 5;
+      newVelocity.y = 3; // Reduced from 5 to 3 for less extreme jumps
       setOnGround(false);
       setJumping(true);
     }
     
     // Apply gravity
     if (!onGround) {
-      newVelocity.y -= delta * 9.8; // Gravity
+      newVelocity.y -= delta * 5; // Reduced from 9.8 to 5 for slower falls
     }
     
     // Update position
