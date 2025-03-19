@@ -1,10 +1,61 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Billboard, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import { useGame, ComponentType } from '@/contexts/GameContext';
+
+// Get a consistent color for each component type
+const getComponentColor = (type: ComponentType): string => {
+  switch (type) {
+    case 'Antenna':
+      return '#42A5F5'; // Blue
+    case 'Modem':
+      return '#FF7043'; // Orange
+    case 'SolarPanel':
+      return '#4CAF50'; // Green
+    case 'Battery':
+      return '#9C27B0'; // Purple
+    case 'OrbitStabilizer':
+      return '#FFC107'; // Amber
+    default:
+      return '#FFFFFF'; // White
+  }
+};
+
+// Pulsing ring effect to make components more visible
+function PulsingRing({ color }: { color: string }) {
+  const ringRef = useRef<THREE.Mesh>(null);
+  const [scale, setScale] = useState(1);
+  const [opacity, setOpacity] = useState(1);
+  
+  useFrame((_, delta) => {
+    // Create pulsing effect for scale and opacity
+    const newScale = 1 + Math.sin(Date.now() * 0.002) * 0.3;
+    setScale(newScale);
+    
+    // Opacity is inverse of scale for better visual effect
+    setOpacity(1 - (newScale - 1) * 2);
+  });
+  
+  return (
+    <mesh
+      ref={ringRef}
+      position={[0, 0.1, 0]}
+      rotation={[-Math.PI / 2, 0, 0]}
+      scale={[scale, scale, 1]}
+    >
+      <ringGeometry args={[0.6, 0.8, 32]} />
+      <meshBasicMaterial 
+        color={color} 
+        transparent 
+        opacity={opacity * 0.7} 
+        side={THREE.DoubleSide}
+      />
+    </mesh>
+  );
+}
 
 // Create a simple component geometry based on its type
 const getComponentGeometry = (type: ComponentType) => {
@@ -116,8 +167,17 @@ function Component({ type, position, description, fact }: {
       onPointerOver={() => setHovered(true)}
       onPointerOut={() => setHovered(false)}
     >
-      {/* Glowing effect */}
-      <pointLight intensity={2} distance={2} color="#ffffff" />
+      {/* Enhanced glowing effect */}
+      <pointLight intensity={2} distance={4} color="#ffffff" />
+      
+      {/* Beacon light effect visible from far away */}
+      <mesh position={[0, 10, 0]}>
+        <cylinderGeometry args={[0.1, 0.5, 20, 8, 1, true]} />
+        <meshBasicMaterial color={getComponentColor(type)} side={THREE.BackSide} transparent opacity={0.3} />
+      </mesh>
+      
+      {/* Pulsing ring effect */}
+      <PulsingRing color={getComponentColor(type)} />
       
       {/* The actual component */}
       {getComponentGeometry(type)}

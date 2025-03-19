@@ -23,9 +23,11 @@ export default function ControlsInfo() {
       <h3 className="text-sm font-bold mb-2">Controls:</h3>
       <ul className="text-xs space-y-1">
         <li>WASD or Arrow Keys - Move</li>
+        <li>Shift - Sprint</li>
         <li>Space - Jump</li>
         <li>Mouse - Look Around</li>
-        <li>Collect all 5 components!</li>
+        <li>Check your radar in the bottom-right corner</li>
+        <li>Explore the infinite world and collect all 5 components!</li>
       </ul>
       <div className="mt-2 text-xs text-yellow-300">
         This message will disappear in a few seconds

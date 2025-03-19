@@ -30,10 +30,6 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
   const [idleTimer, setIdleTimer] = useState(0);
   const [idleAnimation, setIdleAnimation] = useState<'breathe' | 'lookAround' | 'stretch'>('breathe');
   
-  // Platform dimensions (must match Planet.tsx)
-  const PLATFORM_WIDTH = 20;
-  const PLATFORM_LENGTH = 20;
-  
   const { components, collectComponent: gameCollectComponent, gameState, showTitle, collectedComponents } = useGame();
   const { collectComponent: multiplayerCollectComponent } = useMultiplayer();
 
@@ -207,11 +203,16 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
     
     // Move along the ground if input is given
     if (moveDirection.length() > 0) {
-      const moveSpeed = 0.15; // Slightly faster on flat terrain
+      // Even faster movement speed for the infinite world
+      const moveSpeed = 0.8; // Much faster to cover larger distances
+      
+      // Add sprint capability with shift key
+      const sprint = getKeyboardControls().sprint === true;
+      const finalSpeed = sprint ? moveSpeed * 2.0 : moveSpeed;
       
       // Move along the flat surface in the input direction
-      newPosition.x += moveDirection.x * moveSpeed;
-      newPosition.z += moveDirection.z * moveSpeed;
+      newPosition.x += moveDirection.x * finalSpeed;
+      newPosition.z += moveDirection.z * finalSpeed;
     }
     
     // ----------------------------------------
@@ -242,17 +243,8 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
       }
     }
     
-    // ----------------------------------------
-    // ENFORCE TERRAIN BOUNDARIES
-    // ----------------------------------------
-    
-    // Keep the dog within platform boundaries
-    const halfWidth = PLATFORM_WIDTH / 2 - 1;
-    const halfLength = PLATFORM_LENGTH / 2 - 1;
-    
-    // Clamp position to platform boundaries
-    newPosition.x = Math.max(-halfWidth, Math.min(halfWidth, newPosition.x));
-    newPosition.z = Math.max(-halfLength, Math.min(halfLength, newPosition.z));
+    // For an infinite playground, we don't need boundary enforcement
+    // The terrain chunks will be generated procedurally as the player moves
     
     // Update position state
     setPosition(newPosition);
@@ -279,6 +271,14 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
       isMoving,
       isJumping
     );
+    
+    // Store position in localStorage for navigation system
+    localStorage.setItem('satDogPosition', JSON.stringify({
+      x: newPosition.x, 
+      y: newPosition.y, 
+      z: newPosition.z,
+      rotation: rotation
+    }));
     
     // Animate legs when moving
     if (isMoving && onGround && 
@@ -340,7 +340,7 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
   return (
     <group ref={dogRef} position={[0, 0.25, 0]}>
       {/* Body - with glow effect when collecting */}
-      <mesh ref={bodyRef} castShadow>
+      <mesh ref={bodyRef}>
         <boxGeometry args={[0.8, 0.5, 1.2]} />
         <meshStandardMaterial 
           color="#f9a825" 
@@ -351,7 +351,7 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
       </mesh>
       
       {/* Head */}
-      <mesh ref={headRef} position={[0, 0.3, 0.5]} castShadow>
+      <mesh ref={headRef} position={[0, 0.3, 0.5]}>
         <boxGeometry args={[0.6, 0.6, 0.6]} />
         <meshStandardMaterial 
           color="#fbc02d" 
@@ -362,24 +362,24 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
       </mesh>
       
       {/* Ears - now with animation */}
-      <mesh ref={earLeftRef} position={[-0.25, 0.6, 0.5]} castShadow>
+      <mesh ref={earLeftRef} position={[-0.25, 0.6, 0.5]}>
         <coneGeometry args={[0.15, 0.3, 4]} />
         <meshStandardMaterial color="#e0a029" roughness={0.7} />
       </mesh>
-      <mesh ref={earRightRef} position={[0.25, 0.6, 0.5]} castShadow>
+      <mesh ref={earRightRef} position={[0.25, 0.6, 0.5]}>
         <coneGeometry args={[0.15, 0.3, 4]} />
         <meshStandardMaterial color="#e0a029" roughness={0.7} />
       </mesh>
       
       {/* Snout */}
-      <mesh position={[0, 0.1, 0.8]} castShadow>
+      <mesh position={[0, 0.1, 0.8]}>
         <boxGeometry args={[0.4, 0.3, 0.3]} />
         <meshStandardMaterial color="#404040" roughness={0.9} />
       </mesh>
       
       {/* Eyes - blink when happy */}
-      <mesh position={[-0.15, 0.35, 0.81]} castShadow>
-        <sphereGeometry args={[0.08, 10, 10]} />
+      <mesh position={[-0.15, 0.35, 0.81]}>
+        <sphereGeometry args={[0.08, 8, 8]} /> {/* Reduced geometry complexity */}
         <meshStandardMaterial 
           color="#000000" 
           roughness={0.5} 
@@ -387,8 +387,8 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
           emissiveIntensity={isWaggingTail ? 0.5 : 0}
         />
       </mesh>
-      <mesh position={[0.15, 0.35, 0.81]} castShadow>
-        <sphereGeometry args={[0.08, 10, 10]} />
+      <mesh position={[0.15, 0.35, 0.81]}>
+        <sphereGeometry args={[0.08, 8, 8]} /> {/* Reduced geometry complexity */}
         <meshStandardMaterial 
           color="#000000" 
           roughness={0.5} 
@@ -398,25 +398,25 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
       </mesh>
       
       {/* Legs */}
-      <mesh ref={legFrontLeftRef} position={[-0.3, -0.4, 0.4]} castShadow>
+      <mesh ref={legFrontLeftRef} position={[-0.3, -0.4, 0.4]}>
         <boxGeometry args={[0.2, 0.4, 0.2]} />
         <meshStandardMaterial color="#e0a029" roughness={0.7} />
       </mesh>
-      <mesh ref={legFrontRightRef} position={[0.3, -0.4, 0.4]} castShadow>
+      <mesh ref={legFrontRightRef} position={[0.3, -0.4, 0.4]}>
         <boxGeometry args={[0.2, 0.4, 0.2]} />
         <meshStandardMaterial color="#e0a029" roughness={0.7} />
       </mesh>
-      <mesh ref={legBackLeftRef} position={[-0.3, -0.4, -0.4]} castShadow>
+      <mesh ref={legBackLeftRef} position={[-0.3, -0.4, -0.4]}>
         <boxGeometry args={[0.2, 0.4, 0.2]} />
         <meshStandardMaterial color="#e0a029" roughness={0.7} />
       </mesh>
-      <mesh ref={legBackRightRef} position={[0.3, -0.4, -0.4]} castShadow>
+      <mesh ref={legBackRightRef} position={[0.3, -0.4, -0.4]}>
         <boxGeometry args={[0.2, 0.4, 0.2]} />
         <meshStandardMaterial color="#e0a029" roughness={0.7} />
       </mesh>
       
       {/* Tail - now animated */}
-      <mesh ref={tailRef} position={[0, 0.1, -0.7]} rotation={[0, 0, Math.PI / 4]} castShadow>
+      <mesh ref={tailRef} position={[0, 0.1, -0.7]} rotation={[0, 0, Math.PI / 4]}>
         <boxGeometry args={[0.15, 0.5, 0.15]} />
         <meshStandardMaterial 
           color="#fbc02d" 
@@ -426,19 +426,19 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
         />
       </mesh>
       
-      {/* Celebration particles when collecting */}
+      {/* Simplified celebration effect when collecting (fewer particles) */}
       {isWaggingTail && (
         <group>
-          {[...Array(8)].map((_, i) => (
+          {[...Array(4)].map((_, i) => ( // Reduced from 8 to 4 particles
             <mesh 
               key={`particle-${i}`} 
               position={[
-                Math.sin(i / 8 * Math.PI * 2) * 0.8,
-                Math.cos(i / 8 * Math.PI * 2) * 0.8,
+                Math.sin(i / 4 * Math.PI * 2) * 0.8,
+                Math.cos(i / 4 * Math.PI * 2) * 0.8,
                 0
               ]}
             >
-              <sphereGeometry args={[0.06, 8, 8]} />
+              <sphereGeometry args={[0.08, 6, 6]} /> // Larger but less complex geometry
               <meshBasicMaterial 
                 color={i % 2 === 0 ? "#ffff00" : "#ff9500"} 
                 transparent 

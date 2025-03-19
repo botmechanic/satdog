@@ -11,6 +11,7 @@ import ControlsInfo from './ControlsInfo';
 import TitleScreen from './TitleScreen';
 import UsernameInput from './UsernameInput';
 import OtherPlayers from './OtherPlayers';
+import NavigationSystem from './NavigationSystem';
 import { GameProvider } from '@/contexts/GameContext';
 import { MultiplayerProvider } from '@/contexts/MultiplayerContext';
 import * as THREE from 'three';
@@ -25,10 +26,10 @@ function FollowCamera({ playerRef }: { playerRef: React.RefObject<THREE.Group | 
       // Get the player's position
       const playerPosition = playerRef.current.position.clone();
       
-      // For flat terrain, a simpler camera setup works better
-      // Position the camera at a fixed height offset behind the player
-      const cameraHeight = 5;
-      const cameraDistance = 8;
+      // Enhanced camera setup for infinite terrain
+      // Higher camera position with greater distance for better view
+      const cameraHeight = 8;
+      const cameraDistance = 12;
       
       // Get the player's forward direction (based on their rotation)
       const playerRotation = playerRef.current.rotation.y;
@@ -67,29 +68,27 @@ export default function GameComponent() {
         { name: 'backward', keys: ['ArrowDown', 's', 'S'] },
         { name: 'left', keys: ['ArrowLeft', 'a', 'A'] },
         { name: 'right', keys: ['ArrowRight', 'd', 'D'] },
-        { name: 'jump', keys: ['Space'] }
+        { name: 'jump', keys: ['Space'] },
+        { name: 'sprint', keys: ['ShiftLeft', 'ShiftRight'] }
       ]}
     >
       <MultiplayerProvider>
         <GameProvider>
           <div className="relative w-full h-full">
-            <Canvas shadows camera={{ position: [0, 6, 10], fov: 50 }}>
+            <Canvas 
+              shadows={false} // Disable shadows for improved performance
+              camera={{ position: [0, 6, 10], fov: 50 }}
+              dpr={[1, 1.5]} // Limit pixel ratio for performance
+              performance={{ min: 0.5 }} // Allow automatic performance scaling
+            >
               <color attach="background" args={['#000020']} />
               <ambientLight intensity={0.7} />
               <directionalLight
                 position={[10, 15, 10]}
                 intensity={0.8}
-                castShadow
-                shadow-mapSize-width={1024}
-                shadow-mapSize-height={1024}
-                shadow-camera-far={50}
-                shadow-camera-left={-20}
-                shadow-camera-right={20}
-                shadow-camera-top={20}
-                shadow-camera-bottom={-20}
+                castShadow={false} // Disable expensive shadow casting
               />
               <pointLight position={[0, 6, 0]} intensity={0.7} color="#ffffff" />
-              <spotLight position={[0, 10, 0]} angle={0.6} penumbra={0.6} intensity={0.8} castShadow />
               <Suspense fallback={null}>
                 <Planet />
                 <SatDog ref={playerRef} />
@@ -97,12 +96,12 @@ export default function GameComponent() {
                 <Components />
                 <FollowCamera playerRef={playerRef} />
               </Suspense>
-              <Stats />
             </Canvas>
             <AssemblyUI />
             <ControlsInfo />
             <TitleScreen />
             <UsernameInput />
+            <NavigationSystem />
           </div>
         </GameProvider>
       </MultiplayerProvider>
