@@ -13,7 +13,6 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
   const earRightRef = useRef<THREE.Mesh>(null);
   
   const [position, setPosition] = useState<THREE.Vector3>(new THREE.Vector3(0, 5, 0));
-  const [velocity, setVelocity] = useState<THREE.Vector3>(new THREE.Vector3(0, 0, 0));
   const [onGround, setOnGround] = useState(false);
   const [jumping, setJumping] = useState(false);
   const [isWaggingTail, setIsWaggingTail] = useState(false);
@@ -81,81 +80,62 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
     // Get keyboard state
     const { forward, backward, left, right, jump } = getKeyboardControls() as { forward: boolean; backward: boolean; left: boolean; right: boolean; jump: boolean };
     
-    // ------------------------------
-    // Calculate movement direction
-    // ------------------------------
+    // ---------------------------------------------------------------
+    // SIMPLIFIED PLANETOID MOVEMENT SYSTEM - KINEMATIC APPROACH
+    // ---------------------------------------------------------------
     
-    // Get the up direction based on current position (points away from planet center)
-    const upDirection = position.clone().normalize();
+    // Basic state check - are we jumping?
+    const isJumping = jumping;
     
-    // Create a coordinate system for the planet surface at the player's position
-    const forwardDirection = new THREE.Vector3(0, 0, 1);
-    if (Math.abs(upDirection.y) < 0.99) {
-      // If not at poles, compute a tangent direction to planet
-      forwardDirection.crossVectors(new THREE.Vector3(0, 1, 0), upDirection).normalize();
-    }
+    // Direction from planet center to player (unit vector pointing "up" from surface)
+    const surfaceNormal = position.clone().normalize();
     
-    // Get camera's forward and right directions projected onto the planet surface
+    // Project camera directions for intuitive controls based on view
     const cameraForward = new THREE.Vector3(0, 0, -1).applyQuaternion(state.camera.quaternion);
     const cameraRight = new THREE.Vector3(1, 0, 0).applyQuaternion(state.camera.quaternion);
     
-    // Project camera directions onto the tangent plane
-    const projectedForward = cameraForward.clone().sub(upDirection.clone().multiplyScalar(cameraForward.dot(upDirection))).normalize();
-    const projectedRight = cameraRight.clone().sub(upDirection.clone().multiplyScalar(cameraRight.dot(upDirection))).normalize();
+    // Project camera directions onto the tangent plane at player's position
+    const projectedForward = cameraForward.clone()
+      .sub(surfaceNormal.clone().multiplyScalar(cameraForward.dot(surfaceNormal)))
+      .normalize();
     
-    // Calculate movement direction based on input and camera orientation
+    const projectedRight = cameraRight.clone()
+      .sub(surfaceNormal.clone().multiplyScalar(cameraRight.dot(surfaceNormal)))
+      .normalize();
+    
+    // Calculate input direction on the surface plane
     const moveDirection = new THREE.Vector3();
     if (forward) moveDirection.add(projectedForward);
     if (backward) moveDirection.sub(projectedForward);
     if (right) moveDirection.add(projectedRight);
     if (left) moveDirection.sub(projectedRight);
     
+    // Normalize input direction if any input is given
     if (moveDirection.length() > 0) {
       moveDirection.normalize();
     }
     
-    // ------------------------------
-    // Apply physics
-    // ------------------------------
+    // -------------------------------------------
+    // COMPLETELY NON-PHYSICAL MOVEMENT APPROACH
+    // -------------------------------------------
     
-    // Get direction to planet center (gravity direction)
-    const toPlanetCenter = position.clone().normalize().multiplyScalar(-1);
-    const fromPlanetCenter = position.clone().normalize();
+    // Start with the current position
+    const newPosition = position.clone();
     
-    // Calculate current height above planet
-    const distanceFromCenter = position.length();
-    const heightAboveSurface = distanceFromCenter - planetRadius;
     
-    // Determine if on ground (with small grace distance)
-    const groundThreshold = 1.05;
-    const isNowOnGround = heightAboveSurface < groundThreshold;
+    // ----------------------------------------
+    // HANDLE MOVEMENT ALONG SURFACE 
+    // ----------------------------------------
     
-    // Update ground state if changed
-    if (isNowOnGround !== onGround) {
-      setOnGround(isNowOnGround);
-      if (isNowOnGround && jumping) {
-        setJumping(false);
-      }
-    }
-    
-    // Calculate new velocity
-    let newVelocity = velocity.clone();
-    
-    // MOVEMENT CONTROL
-    // Only allow control when on or very close to the ground
-    if (isNowOnGround && moveDirection.length() > 0) {
-      // Use a constant movement speed that doesn't accumulate
-      const moveSpeed = 0.1;
+    // Move along the surface if input is given
+    if (moveDirection.length() > 0) {
+      // Calculate the speed based on whether we're moving or jumping
+      const moveSpeed = 0.08; // Slow down movement for better control
       
-      // Create a new velocity that replaces the old one
-      const movementVelocity = moveDirection.multiplyScalar(moveSpeed);
+      // Move along the surface in the input direction
+      newPosition.add(moveDirection.multiplyScalar(moveSpeed));
       
-      // Keep vertical velocity component, replace horizontal
-      const verticalVelocity = fromPlanetCenter.clone().multiplyScalar(newVelocity.dot(fromPlanetCenter));
-      
-      // Set new velocity to be horizontal movement + vertical component
-      newVelocity = movementVelocity.clone().add(verticalVelocity);
-      
+      // Keep track of animation state
       // Slight tail wag while running
       if (tailRef.current && !isWaggingTail) {
         const runWagAngle = Math.sin(state.clock.elapsedTime * 8) * 0.3;
@@ -163,72 +143,71 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
       }
     }
     
-    // JUMPING
-    // Only allow jumping when on ground
-    if (jump && isNowOnGround && !jumping) {
-      // First cancel any downward velocity
-      const currentNormalVelocity = newVelocity.dot(fromPlanetCenter);
-      if (currentNormalVelocity < 0) {
-        newVelocity.sub(fromPlanetCenter.clone().multiplyScalar(currentNormalVelocity));
-      }
-      
-      // Then add jump force
-      const jumpForce = 0.15;
-      newVelocity.add(fromPlanetCenter.clone().multiplyScalar(jumpForce));
+    // ----------------------------------------
+    // HANDLE JUMPING
+    // ----------------------------------------
+    
+    // Jumping uses a simple parabolic animation rather than physics
+    // This is much more stable than true physics
+    
+    // If jump button is pressed and we're not already jumping
+    if (jump && !isJumping && onGround) {
       setJumping(true);
       setOnGround(false);
+      
+      // Start jump sequence (no actual velocity involved)
+      const jumpDirection = surfaceNormal.clone();
+      
+      // Add a burst of upward movement (this will be constrained back to surface in later frames)
+      newPosition.add(jumpDirection.multiplyScalar(0.3));
     }
     
-    // GRAVITY
-    // Always apply gravity towards planet center, with less gravity when on ground
-    const gravity = isNowOnGround ? 0.005 : 0.01;
-    newVelocity.add(toPlanetCenter.multiplyScalar(gravity));
-    
-    // Calculate the new position based on velocity
-    const newPosition = position.clone().add(newVelocity);
-    const newDistanceFromCenter = newPosition.length();
-    
-    // COLLISION DETECTION & RESPONSE
-    // If we're below the surface, move back up and zero out downward velocity
-    if (newDistanceFromCenter < planetRadius + 1.0) {
-      // Get new up direction
-      const newUpDirection = newPosition.clone().normalize();
+    // If we're in the middle of a jump, simulate it with a simple parabola
+    // This would normally be timer-based, but we'll use distance for simplicity
+    if (isJumping) {
+      const distFromPlanet = newPosition.length();
       
-      // Place exactly at surface height
-      newPosition.copy(newUpDirection.multiplyScalar(planetRadius + 1.0));
-      
-      // Calculate the component of velocity going into the planet
-      const normalVelocity = newVelocity.dot(newUpDirection);
-      
-      // If moving into the planet, remove that component completely
-      if (normalVelocity < 0) {
-        newVelocity.sub(newUpDirection.multiplyScalar(normalVelocity));
-        
-        // Apply very high friction when hitting the ground
-        newVelocity.multiplyScalar(0.5);
+      // Check if we're beyond the maximal jump height
+      if (distFromPlanet > planetRadius + 1.5) {
+        // Start falling back down
+        const fallVector = surfaceNormal.clone().multiplyScalar(-0.1);
+        newPosition.add(fallVector);
+      } else if (distFromPlanet < planetRadius + 0.5) {
+        // Reached ground - end jump
+        setJumping(false);
+        setOnGround(true);
+      } else {
+        // Still moving upward
+        const jumpStep = surfaceNormal.clone().multiplyScalar(0.05);
+        newPosition.add(jumpStep);
       }
-      
-      // Add a tiny upward force to prevent sticking to the surface
-      newVelocity.add(newUpDirection.multiplyScalar(0.001));
     }
     
-    // Apply general drag/friction to prevent infinite sliding
-    if (isNowOnGround) {
-      // High friction on ground
-      newVelocity.multiplyScalar(0.8);
+    // ----------------------------------------
+    // ENFORCE PLANET CONSTRAINTS
+    // ----------------------------------------
+    
+    // Always maintain correct distance from planet surface
+    // Calculate the direction from planet center to new position
+    const dirToPlanet = newPosition.clone().normalize();
+    
+    // For non-jumping state, lock to surface exactly
+    if (!isJumping) {
+      // Fix position to be exactly at surface distance
+      newPosition.copy(dirToPlanet.multiplyScalar(planetRadius + 1.0));
+      setOnGround(true);
     } else {
-      // Slight air resistance
-      newVelocity.multiplyScalar(0.99);
+      // During jump, prevent falling through surface
+      const newHeight = newPosition.length();
+      if (newHeight < planetRadius + 1.0) {
+        newPosition.copy(dirToPlanet.multiplyScalar(planetRadius + 1.0));
+        setJumping(false);
+        setOnGround(true);
+      }
     }
     
-    // If velocity is very small when on ground, zero it out to prevent drift
-    if (isNowOnGround && newVelocity.length() < 0.01) {
-      newVelocity.set(0, 0, 0);
-    }
-    
-    // Update state with new values
+    // Update position state directly (no physics/velocity system)
     setPosition(newPosition);
-    setVelocity(newVelocity);
     
     // Update mesh position
     dogRef.current.position.copy(newPosition);
