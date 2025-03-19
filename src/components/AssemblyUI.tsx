@@ -142,9 +142,9 @@ export default function AssemblyUI() {
           <div className="bg-gray-900 p-4 rounded-lg">
             <h3 className="text-white mb-2">Components</h3>
             <div className="flex gap-4 justify-center">
-              {availableComponents.map(component => (
+              {availableComponents.map((component, index) => (
                 <div 
-                  key={component}
+                  key={`component-${component}-${index}`}
                   className={`${COMPONENT_DETAILS[component].color} ${COMPONENT_DETAILS[component].size} rounded cursor-grab flex items-center justify-center shadow-lg`}
                   draggable
                   onDragStart={() => handleDragStart(component)}
