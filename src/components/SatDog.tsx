@@ -118,12 +118,19 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
     // Apply physics
     // ------------------------------
     
-    // Current distance from planet center
-    const distanceFromCenter = position.length();
-    const distanceFromSurface = distanceFromCenter - planetRadius;
+    // Get direction to planet center (gravity direction)
+    const toPlanetCenter = position.clone().normalize().multiplyScalar(-1);
+    const fromPlanetCenter = position.clone().normalize();
     
-    // Determine if the character is on the ground
-    const isNowOnGround = distanceFromSurface < 1.1;
+    // Calculate current height above planet
+    const distanceFromCenter = position.length();
+    const heightAboveSurface = distanceFromCenter - planetRadius;
+    
+    // Determine if on ground (with small grace distance)
+    const groundThreshold = 1.05;
+    const isNowOnGround = heightAboveSurface < groundThreshold;
+    
+    // Update ground state if changed
     if (isNowOnGround !== onGround) {
       setOnGround(isNowOnGround);
       if (isNowOnGround && jumping) {
@@ -131,14 +138,23 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
       }
     }
     
-    // Update velocity based on inputs and state
-    const newVelocity = velocity.clone();
+    // Calculate new velocity
+    let newVelocity = velocity.clone();
     
-    // Apply movement if on ground
+    // MOVEMENT CONTROL
+    // Only allow control when on or very close to the ground
     if (isNowOnGround && moveDirection.length() > 0) {
-      // Apply movement force
-      const moveSpeed = 5.0 * delta;
-      newVelocity.add(moveDirection.multiplyScalar(moveSpeed));
+      // Use a constant movement speed that doesn't accumulate
+      const moveSpeed = 0.1;
+      
+      // Create a new velocity that replaces the old one
+      const movementVelocity = moveDirection.multiplyScalar(moveSpeed);
+      
+      // Keep vertical velocity component, replace horizontal
+      const verticalVelocity = fromPlanetCenter.clone().multiplyScalar(newVelocity.dot(fromPlanetCenter));
+      
+      // Set new velocity to be horizontal movement + vertical component
+      newVelocity = movementVelocity.clone().add(verticalVelocity);
       
       // Slight tail wag while running
       if (tailRef.current && !isWaggingTail) {
@@ -147,47 +163,57 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
       }
     }
     
-    // Jump if on ground and jump key pressed
+    // JUMPING
+    // Only allow jumping when on ground
     if (jump && isNowOnGround && !jumping) {
-      newVelocity.add(upDirection.multiplyScalar(4.0));
+      const jumpForce = 0.2;
+      newVelocity.add(fromPlanetCenter.multiplyScalar(jumpForce));
       setJumping(true);
       setOnGround(false);
     }
     
-    // Apply gravity (always toward planet center)
-    const gravityForce = 10.0 * delta;
-    newVelocity.add(upDirection.clone().multiplyScalar(-gravityForce));
+    // GRAVITY
+    // Always apply gravity towards planet center
+    const gravity = 0.01;
+    newVelocity.add(toPlanetCenter.multiplyScalar(gravity));
     
-    // Apply damping/friction
-    if (isNowOnGround) {
-      // Higher friction on ground
-      newVelocity.multiplyScalar(0.9);
-    } else {
-      // Lower air resistance
-      newVelocity.multiplyScalar(0.98);
-    }
-    
-    // ------------------------------
-    // Update position
-    // ------------------------------
-    
-    // Calculate new position
+    // Calculate the new position based on velocity
     const newPosition = position.clone().add(newVelocity);
-    
-    // Ensure player stays at correct distance from planet
     const newDistanceFromCenter = newPosition.length();
-    const newUpDirection = newPosition.clone().normalize();
     
+    // COLLISION DETECTION & RESPONSE
+    // If we're below the surface, move back up and zero out downward velocity
     if (newDistanceFromCenter < planetRadius + 1.0) {
-      // If too close to planet, push back to surface
+      // Get new up direction
+      const newUpDirection = newPosition.clone().normalize();
+      
+      // Place exactly at surface height
       newPosition.copy(newUpDirection.multiplyScalar(planetRadius + 1.0));
       
-      // Remove velocity component toward planet
+      // Calculate the component of velocity going into the planet
       const normalVelocity = newVelocity.dot(newUpDirection);
+      
+      // If moving into the planet, remove that component completely
       if (normalVelocity < 0) {
-        newVelocity.sub(newUpDirection.clone().multiplyScalar(normalVelocity));
-        newVelocity.multiplyScalar(0.8); // Add bounce damping
+        newVelocity.sub(newUpDirection.multiplyScalar(normalVelocity));
+        
+        // Apply very high friction when hitting the ground
+        newVelocity.multiplyScalar(0.5);
       }
+    }
+    
+    // Apply general drag/friction to prevent infinite sliding
+    if (isNowOnGround) {
+      // High friction on ground
+      newVelocity.multiplyScalar(0.8);
+    } else {
+      // Slight air resistance
+      newVelocity.multiplyScalar(0.99);
+    }
+    
+    // If velocity is very small when on ground, zero it out to prevent drift
+    if (isNowOnGround && newVelocity.length() < 0.01) {
+      newVelocity.set(0, 0, 0);
     }
     
     // Update state with new values
@@ -202,8 +228,11 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
       // Calculate rotation to face movement direction
       const targetQuaternion = new THREE.Quaternion();
       
+      // Get up direction from current position
+      const upVector = newPosition.clone().normalize();
+      
       // Create a basis where Y is up, and Z is the movement direction
-      const tempUp = newUpDirection;
+      const tempUp = upVector;
       const tempForward = moveDirection.clone();
       const tempRight = new THREE.Vector3().crossVectors(tempForward, tempUp).normalize();
       tempForward.crossVectors(tempUp, tempRight).normalize();
