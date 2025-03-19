@@ -1,8 +1,8 @@
 'use client';
 
-import { Suspense } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Stats, KeyboardControls } from '@react-three/drei';
+import { Suspense, useRef } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Stats, KeyboardControls } from '@react-three/drei';
 import Planet from './Planet';
 import SatDog from './SatDog';
 import Components from './Components';
@@ -10,8 +10,53 @@ import AssemblyUI from './AssemblyUI';
 import ControlsInfo from './ControlsInfo';
 import TitleScreen from './TitleScreen';
 import { GameProvider } from '@/contexts/GameContext';
+import * as THREE from 'three';
+
+// Camera that follows the player
+function FollowCamera({ playerRef }: { playerRef: React.RefObject<THREE.Group | null> }) {
+  const { camera } = useThree();
+  const cameraPositionRef = useRef(new THREE.Vector3(0, 7, 10));
+  const cameraTargetRef = useRef(new THREE.Vector3(0, 0, 0));
+  
+  useFrame(() => {
+    if (playerRef.current) {
+      // Get the player's position
+      const playerPosition = playerRef.current.position.clone();
+      
+      // Calculate the camera target (slightly smoothed)
+      cameraTargetRef.current.lerp(playerPosition, 0.1);
+      
+      // Calculate camera position (offset from player)
+      const idealOffset = new THREE.Vector3(0, 3, 6);
+      
+      // Rotate the offset based on player's position on the planet
+      const playerDirection = playerPosition.clone().normalize();
+      const quaternion = new THREE.Quaternion().setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        playerDirection
+      );
+      
+      // Apply the rotation to get the proper camera offset
+      idealOffset.applyQuaternion(quaternion);
+      
+      // Add the offset to the player position
+      const idealPosition = playerPosition.clone().add(idealOffset);
+      
+      // Smoothly move the camera
+      cameraPositionRef.current.lerp(idealPosition, 0.05);
+      
+      // Update camera position and target
+      camera.position.copy(cameraPositionRef.current);
+      camera.lookAt(playerPosition);
+    }
+  });
+  
+  return null;
+}
 
 export default function GameComponent() {
+  const playerRef = useRef<THREE.Group>(null);
+  
   return (
     <KeyboardControls
       map={[
@@ -43,19 +88,10 @@ export default function GameComponent() {
             <spotLight position={[0, 8, 8]} angle={0.5} penumbra={0.5} intensity={0.8} castShadow />
             <Suspense fallback={null}>
               <Planet />
-              <SatDog />
+              <SatDog ref={playerRef} />
               <Components />
+              <FollowCamera playerRef={playerRef} />
             </Suspense>
-            <OrbitControls 
-              enablePan={false} 
-              maxPolarAngle={Math.PI / 2 - 0.1} 
-              minDistance={8} 
-              maxDistance={15}
-              enableDamping={true}
-              dampingFactor={0.05}
-              minPolarAngle={Math.PI / 6}
-              target={[0, 0, 0]}
-            />
             <Stats />
           </Canvas>
           <AssemblyUI />

@@ -1,12 +1,12 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, forwardRef, Ref } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useKeyboardControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { useGame } from '@/contexts/GameContext';
 
-export default function SatDog() {
+const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
   const dogRef = useRef<THREE.Group>(null);
   const tailRef = useRef<THREE.Mesh>(null);
   const earLeftRef = useRef<THREE.Mesh>(null);
@@ -184,10 +184,17 @@ export default function SatDog() {
       const quaternion = new THREE.Quaternion().setFromUnitVectors(up, normal);
       dogRef.current.quaternion.copy(quaternion);
     }
-  }, [position]);
+    
+    // Pass the dog ref to the forwarded ref
+    if (typeof ref === 'function') {
+      ref(dogRef.current);
+    } else if (ref) {
+      ref.current = dogRef.current;
+    }
+  }, [position, ref]);
 
   return (
-    <group ref={dogRef} position={[0, 8, 0]}>
+    <group ref={dogRef} position={[0, 5, 0]}>
       {/* Body - with glow effect when collecting */}
       <mesh castShadow>
         <boxGeometry args={[0.8, 0.5, 1.2]} />
@@ -299,4 +306,6 @@ export default function SatDog() {
       )}
     </group>
   );
-}
+});
+
+export default SatDog;
