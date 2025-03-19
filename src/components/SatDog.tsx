@@ -166,15 +166,22 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
     // JUMPING
     // Only allow jumping when on ground
     if (jump && isNowOnGround && !jumping) {
-      const jumpForce = 0.2;
-      newVelocity.add(fromPlanetCenter.multiplyScalar(jumpForce));
+      // First cancel any downward velocity
+      const currentNormalVelocity = newVelocity.dot(fromPlanetCenter);
+      if (currentNormalVelocity < 0) {
+        newVelocity.sub(fromPlanetCenter.clone().multiplyScalar(currentNormalVelocity));
+      }
+      
+      // Then add jump force
+      const jumpForce = 0.15;
+      newVelocity.add(fromPlanetCenter.clone().multiplyScalar(jumpForce));
       setJumping(true);
       setOnGround(false);
     }
     
     // GRAVITY
-    // Always apply gravity towards planet center
-    const gravity = 0.01;
+    // Always apply gravity towards planet center, with less gravity when on ground
+    const gravity = isNowOnGround ? 0.005 : 0.01;
     newVelocity.add(toPlanetCenter.multiplyScalar(gravity));
     
     // Calculate the new position based on velocity
@@ -200,6 +207,9 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
         // Apply very high friction when hitting the ground
         newVelocity.multiplyScalar(0.5);
       }
+      
+      // Add a tiny upward force to prevent sticking to the surface
+      newVelocity.add(newUpDirection.multiplyScalar(0.001));
     }
     
     // Apply general drag/friction to prevent infinite sliding
