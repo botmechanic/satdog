@@ -16,38 +16,55 @@ import * as THREE from 'three';
 function FollowCamera({ playerRef }: { playerRef: React.RefObject<THREE.Group | null> }) {
   const { camera } = useThree();
   const cameraPositionRef = useRef(new THREE.Vector3(0, 7, 10));
-  const cameraTargetRef = useRef(new THREE.Vector3(0, 0, 0));
+  const planetCenterRef = useRef(new THREE.Vector3(0, 0, 0));
   
   useFrame(() => {
     if (playerRef.current) {
       // Get the player's position
       const playerPosition = playerRef.current.position.clone();
       
-      // Calculate the camera target (slightly smoothed)
-      cameraTargetRef.current.lerp(playerPosition, 0.1);
+      // Calculate vector from planet center to player
+      const planetToPlayer = playerPosition.clone().sub(planetCenterRef.current);
+      const distanceToPlayer = planetToPlayer.length();
+      const directionToPlayer = planetToPlayer.normalize();
       
-      // Calculate camera position (offset from player)
-      const idealOffset = new THREE.Vector3(0, 3, 6);
-      
-      // Rotate the offset based on player's position on the planet
-      const playerDirection = playerPosition.clone().normalize();
-      const quaternion = new THREE.Quaternion().setFromUnitVectors(
-        new THREE.Vector3(0, 1, 0),
-        playerDirection
+      // Calculate an offset that's between planet center and player
+      // This keeps both the planet and player in frame
+      const offsetPoint = planetCenterRef.current.clone().add(
+        directionToPlayer.multiplyScalar(distanceToPlayer * 0.5)
       );
       
-      // Apply the rotation to get the proper camera offset
-      idealOffset.applyQuaternion(quaternion);
+      // Position camera to see both planet and player
+      // Increase camera height for better view angle
+      const cameraOffset = new THREE.Vector3(0, 5, 7);
       
-      // Add the offset to the player position
-      const idealPosition = playerPosition.clone().add(idealOffset);
+      // Align camera offset with player's position on the planet
+      const playerUpDirection = playerPosition.clone().normalize();
+      
+      // Create rotation to align with player position
+      const lookRotation = new THREE.Quaternion().setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        playerUpDirection
+      );
+      
+      // Apply rotation to camera offset
+      cameraOffset.applyQuaternion(lookRotation);
+      
+      // Final camera position - centered on midpoint between planet and player
+      const idealPosition = offsetPoint.clone().add(cameraOffset);
       
       // Smoothly move the camera
       cameraPositionRef.current.lerp(idealPosition, 0.05);
       
-      // Update camera position and target
+      // Update camera position and make it look at player
       camera.position.copy(cameraPositionRef.current);
-      camera.lookAt(playerPosition);
+      
+      // Look at a point between planet center and player (weighted toward player)
+      const lookTarget = planetCenterRef.current.clone().lerp(playerPosition, 0.7);
+      camera.lookAt(lookTarget);
+    } else {
+      // If player not found, default to looking at planet center
+      camera.lookAt(planetCenterRef.current);
     }
   });
   
@@ -69,11 +86,11 @@ export default function GameComponent() {
     >
       <GameProvider>
         <div className="relative w-full h-full">
-          <Canvas shadows camera={{ position: [0, 7, 10], fov: 50 }}>
+          <Canvas shadows camera={{ position: [0, 10, 15], fov: 40 }}>
             <color attach="background" args={['#000020']} />
-            <ambientLight intensity={0.6} />
+            <ambientLight intensity={0.7} />
             <directionalLight
-              position={[10, 10, 10]}
+              position={[10, 15, 10]}
               intensity={0.8}
               castShadow
               shadow-mapSize-width={1024}
@@ -85,7 +102,7 @@ export default function GameComponent() {
               shadow-camera-bottom={-20}
             />
             <pointLight position={[0, 6, 0]} intensity={0.7} color="#ffffff" />
-            <spotLight position={[0, 8, 8]} angle={0.5} penumbra={0.5} intensity={0.8} castShadow />
+            <spotLight position={[0, 10, 0]} angle={0.6} penumbra={0.6} intensity={0.8} castShadow />
             <Suspense fallback={null}>
               <Planet />
               <SatDog ref={playerRef} />
