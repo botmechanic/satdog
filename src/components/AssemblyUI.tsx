@@ -172,7 +172,7 @@ export default function AssemblyUI() {
       
       {gameState === 'completed' && (
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-white mb-6">Satellite Launched!</h2>
+          <h2 className="text-3xl font-bold text-white mb-6">Message Sent!</h2>
           <div className="animate-pulse mb-4 text-yellow-300 text-lg">✨ Mission Accomplished! ✨</div>
           
           {/* Orbit visualization */}
