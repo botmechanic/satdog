@@ -7,8 +7,8 @@ import * as THREE from 'three';
 import { useGame } from '@/contexts/GameContext';
 
 // Chunk size and view distance configuration
-const CHUNK_SIZE = 30; // Larger chunk size to reduce number of rendered objects
-const RENDER_DISTANCE = 2; // Decreased render distance to improve performance
+const CHUNK_SIZE = 40; // Increased chunk size for better visibility
+const RENDER_DISTANCE = 3; // Increased render distance for better view
 const VIEW_DISTANCE = CHUNK_SIZE * RENDER_DISTANCE; // Actual view distance in units
 
 // Utility function to generate deterministic random using a seed
@@ -317,9 +317,9 @@ export default function Planet() {
 
   // Simpler fog effect for better performance
   const fogEffect = useMemo(() => {
-    // Use a more aggressive fog effect to hide pop-in and reduce rendering load
+    // Lighter fog effect for better visibility with increased view distance
     return (
-      <fog attach="fog" args={['#87ceeb', VIEW_DISTANCE * 0.5, VIEW_DISTANCE * 0.9]} />
+      <fog attach="fog" args={['#87ceeb', VIEW_DISTANCE * 0.75, VIEW_DISTANCE * 1.5]} />
     );
   }, []);
 
@@ -339,8 +339,8 @@ export default function Planet() {
       
       {/* Add ambient base to provide sense of ground in the far distance */}
       <mesh position={[0, -10, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[VIEW_DISTANCE * 10, VIEW_DISTANCE * 10]} />
-        <meshBasicMaterial color="#1e4d6b" transparent opacity={0.4} />
+        <planeGeometry args={[VIEW_DISTANCE * 15, VIEW_DISTANCE * 15]} />
+        <meshBasicMaterial color="#1e4d6b" transparent opacity={0.3} />
       </mesh>
     </group>
   );

@@ -462,28 +462,34 @@ export default function SpaceEducation() {
   // If a specific content is active, render just that
   if (activeFact) {
     return (
-      <div className="absolute top-4 right-4 z-10 pointer-events-auto">
-        <FactCard fact={activeFact} onClose={() => setActiveFact(null)} />
+      <div className="absolute top-4 right-4 z-10 pointer-events-auto flex justify-end">
+        <div className="pointer-events-auto">
+          <FactCard fact={activeFact} onClose={() => setActiveFact(null)} />
+        </div>
       </div>
     );
   }
 
   if (activeChallenge) {
     return (
-      <div className="absolute top-4 right-4 z-10 pointer-events-auto">
-        <ChallengeCard 
-          challenge={activeChallenge} 
-          onClose={() => setActiveChallenge(null)} 
-          onComplete={(correct) => handleChallengeComplete(activeChallenge.id, correct)}
-        />
+      <div className="absolute top-4 right-4 z-10 pointer-events-auto flex justify-end">
+        <div className="pointer-events-auto">
+          <ChallengeCard 
+            challenge={activeChallenge} 
+            onClose={() => setActiveChallenge(null)} 
+            onComplete={(correct) => handleChallengeComplete(activeChallenge.id, correct)}
+          />
+        </div>
       </div>
     );
   }
 
   if (activeModel) {
     return (
-      <div className="absolute top-4 right-4 z-10 pointer-events-auto">
-        <SatelliteModelCard model={activeModel} onClose={() => setActiveModel(null)} />
+      <div className="absolute top-4 right-4 z-10 pointer-events-auto flex justify-end">
+        <div className="pointer-events-auto">
+          <SatelliteModelCard model={activeModel} onClose={() => setActiveModel(null)} />
+        </div>
       </div>
     );
   }

@@ -13,6 +13,9 @@ import UsernameInput from './UsernameInput';
 import OtherPlayers from './OtherPlayers';
 import NavigationSystem from './NavigationSystem';
 import SpaceEducation from './SpaceEducation';
+import SatelliteTechnologies from './SatelliteTechnologies';
+import SpaceIndustryApplications from './SpaceIndustryApplications';
+import SatelliteConstellations from './SatelliteConstellations';
 import EnvironmentalStories from './EnvironmentalStories';
 import DataVisualization from './DataVisualization';
 import { GameProvider } from '@/contexts/GameContext';
@@ -22,7 +25,7 @@ import * as THREE from 'three';
 // Camera that follows the player on flat terrain
 function FollowCamera({ playerRef }: { playerRef: React.RefObject<THREE.Group | null> }) {
   const { camera } = useThree();
-  const cameraPositionRef = useRef(new THREE.Vector3(0, 6, 10));
+  const cameraPositionRef = useRef(new THREE.Vector3(0, 15, 20));
   
   useFrame(() => {
     if (playerRef.current) {
@@ -31,8 +34,8 @@ function FollowCamera({ playerRef }: { playerRef: React.RefObject<THREE.Group | 
       
       // Enhanced camera setup for infinite terrain
       // Higher camera position with greater distance for better view
-      const cameraHeight = 8;
-      const cameraDistance = 12;
+      const cameraHeight = 15;  // Increased from 8 for better overview
+      const cameraDistance = 20;  // Increased from 12 for wider view
       
       // Get the player's forward direction (based on their rotation)
       const playerRotation = playerRef.current.rotation.y;
@@ -80,7 +83,7 @@ export default function GameComponent() {
           <div className="relative w-full h-full">
             <Canvas 
               shadows={false} // Disable shadows for improved performance
-              camera={{ position: [0, 6, 10], fov: 50 }}
+              camera={{ position: [0, 15, 20], fov: 65 }} // Wider field of view and initial position
               dpr={[1, 1.5]} // Limit pixel ratio for performance
               performance={{ min: 0.5 }} // Allow automatic performance scaling
             >
@@ -108,6 +111,9 @@ export default function GameComponent() {
             <UsernameInput />
             <NavigationSystem />
             <SpaceEducation />
+            <SatelliteTechnologies />
+            <SpaceIndustryApplications />
+            <SatelliteConstellations />
           </div>
         </GameProvider>
       </MultiplayerProvider>
