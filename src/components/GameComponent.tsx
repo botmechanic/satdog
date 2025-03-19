@@ -13,6 +13,8 @@ import UsernameInput from './UsernameInput';
 import OtherPlayers from './OtherPlayers';
 import NavigationSystem from './NavigationSystem';
 import SpaceEducation from './SpaceEducation';
+import EnvironmentalStories from './EnvironmentalStories';
+import DataVisualization from './DataVisualization';
 import { GameProvider } from '@/contexts/GameContext';
 import { MultiplayerProvider } from '@/contexts/MultiplayerContext';
 import * as THREE from 'three';
@@ -93,6 +95,8 @@ export default function GameComponent() {
               <Suspense fallback={null}>
                 <Planet />
                 <SatDog ref={playerRef} />
+                <EnvironmentalStories />
+                <DataVisualization />
                 <OtherPlayers />
                 <Components />
                 <FollowCamera playerRef={playerRef} />
