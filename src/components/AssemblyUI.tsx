@@ -63,6 +63,9 @@ export default function AssemblyUI() {
       {gameState === 'assembling' && (
         <>
           <h2 className="text-2xl font-bold text-white mb-4">Assemble the Satellite</h2>
+          <div className="text-sm text-blue-300 mb-4">
+            Drag and drop components to build a modern IoT satellite capable of global coverage.
+          </div>
           
           {message && (
             <div className="text-yellow-300 mb-4">{message}</div>
@@ -198,6 +201,14 @@ export default function AssemblyUI() {
             <div className="text-center font-bold text-xl">{message}</div>
             <div className="mt-2 text-sm font-semibold text-green-600">Message Sent Successfully! 🛰️</div>
             <div className="mt-1 text-xs text-gray-600">SatDog&apos;s signal is now orbiting Earth!</div>
+            <div className="mt-3 pt-3 border-t border-gray-200 text-xs text-gray-500">
+              <p className="mb-1">Did you know? Modern satellite IoT networks can deliver messages from anywhere on Earth using less power than a typical LED light bulb.</p>
+              <div className="flex justify-center gap-4 mt-2">
+                <img src="/logos/iridium.svg" alt="Iridium" className="h-6" />
+                <img src="/logos/spacex.svg" alt="SpaceX" className="h-6" />
+                <img src="/logos/esa.svg" alt="ESA" className="h-6" />
+              </div>
+            </div>
           </div>
           
           <button 

@@ -321,6 +321,10 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
         if (distance < 1.5) {
           gameCollectComponent(component.type);
           multiplayerCollectComponent(component.type);
+          
+          // Trigger educational content - store the component type in localStorage
+          // The SpaceEducation component will check for this and show relevant content
+          localStorage.setItem('lastCollectedComponent', component.type);
         }
       }
     });

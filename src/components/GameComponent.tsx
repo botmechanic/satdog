@@ -12,6 +12,7 @@ import TitleScreen from './TitleScreen';
 import UsernameInput from './UsernameInput';
 import OtherPlayers from './OtherPlayers';
 import NavigationSystem from './NavigationSystem';
+import SpaceEducation from './SpaceEducation';
 import { GameProvider } from '@/contexts/GameContext';
 import { MultiplayerProvider } from '@/contexts/MultiplayerContext';
 import * as THREE from 'three';
@@ -102,6 +103,7 @@ export default function GameComponent() {
             <TitleScreen />
             <UsernameInput />
             <NavigationSystem />
+            <SpaceEducation />
           </div>
         </GameProvider>
       </MultiplayerProvider>

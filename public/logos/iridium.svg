@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="40" fill="#0c4a6e" />
+  <path d="M30,40 L70,40 L70,60 L30,60 Z" fill="#0ea5e9" />
+  <circle cx="50" cy="50" r="15" fill="#0c4a6e" />
+  <circle cx="50" cy="50" r="10" fill="#0ea5e9" />
+  <text x="50" y="53" font-family="Arial" font-size="6" font-weight="bold" text-anchor="middle" fill="#fff">IRIDIUM</text>
+</svg>

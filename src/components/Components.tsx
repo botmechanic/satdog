@@ -6,6 +6,15 @@ import { Billboard, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import { useGame, ComponentType } from '@/contexts/GameContext';
 
+// Used to trigger educational content when components are collected
+const COMPONENT_TO_EDUCATION = {
+  'Antenna': 'iridium-1',
+  'Modem': 'sat-comms',
+  'SolarPanel': 'starlink-1',
+  'Battery': 'globalstar',
+  'OrbitStabilizer': 'kepler-laws'
+};
+
 // Get a consistent color for each component type
 const getComponentColor = (type: ComponentType): string => {
   switch (type) {

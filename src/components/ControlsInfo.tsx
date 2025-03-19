@@ -27,6 +27,7 @@ export default function ControlsInfo() {
         <li>Space - Jump</li>
         <li>Mouse - Look Around</li>
         <li>Check your radar in the bottom-right corner</li>
+        <li>Click the 🛰️ button for satellite education content</li>
         <li>Explore the infinite world and collect all 5 components!</li>
       </ul>
       <div className="mt-2 text-xs text-yellow-300">
