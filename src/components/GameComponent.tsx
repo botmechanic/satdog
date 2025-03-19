@@ -12,46 +12,32 @@ import TitleScreen from './TitleScreen';
 import { GameProvider } from '@/contexts/GameContext';
 import * as THREE from 'three';
 
-// Camera that follows the player
+// Camera that follows the player on flat terrain
 function FollowCamera({ playerRef }: { playerRef: React.RefObject<THREE.Group | null> }) {
   const { camera } = useThree();
-  const cameraPositionRef = useRef(new THREE.Vector3(0, 7, 10));
-  const planetCenterRef = useRef(new THREE.Vector3(0, 0, 0));
+  const cameraPositionRef = useRef(new THREE.Vector3(0, 6, 10));
   
   useFrame(() => {
     if (playerRef.current) {
       // Get the player's position
       const playerPosition = playerRef.current.position.clone();
       
-      // Calculate vector from planet center to player
-      const planetToPlayer = playerPosition.clone().sub(planetCenterRef.current);
-      const distanceToPlayer = planetToPlayer.length();
-      const directionToPlayer = planetToPlayer.normalize();
+      // For flat terrain, a simpler camera setup works better
+      // Position the camera at a fixed height offset behind the player
+      const cameraHeight = 5;
+      const cameraDistance = 8;
       
-      // Calculate an offset that's between planet center and player
-      // This keeps both the planet and player in frame
-      const offsetPoint = planetCenterRef.current.clone().add(
-        directionToPlayer.multiplyScalar(distanceToPlayer * 0.5)
+      // Get the player's forward direction (based on their rotation)
+      const playerRotation = playerRef.current.rotation.y;
+      const offsetX = -Math.sin(playerRotation) * cameraDistance;
+      const offsetZ = -Math.cos(playerRotation) * cameraDistance;
+      
+      // Calculate ideal camera position
+      const idealPosition = new THREE.Vector3(
+        playerPosition.x + offsetX,
+        playerPosition.y + cameraHeight,
+        playerPosition.z + offsetZ
       );
-      
-      // Position camera to see both planet and player
-      // Increase camera height for better view angle
-      const cameraOffset = new THREE.Vector3(0, 5, 7);
-      
-      // Align camera offset with player's position on the planet
-      const playerUpDirection = playerPosition.clone().normalize();
-      
-      // Create rotation to align with player position
-      const lookRotation = new THREE.Quaternion().setFromUnitVectors(
-        new THREE.Vector3(0, 1, 0),
-        playerUpDirection
-      );
-      
-      // Apply rotation to camera offset
-      cameraOffset.applyQuaternion(lookRotation);
-      
-      // Final camera position - centered on midpoint between planet and player
-      const idealPosition = offsetPoint.clone().add(cameraOffset);
       
       // Smoothly move the camera
       cameraPositionRef.current.lerp(idealPosition, 0.05);
@@ -59,12 +45,9 @@ function FollowCamera({ playerRef }: { playerRef: React.RefObject<THREE.Group | 
       // Update camera position and make it look at player
       camera.position.copy(cameraPositionRef.current);
       
-      // Look at a point between planet center and player (weighted toward player)
-      const lookTarget = planetCenterRef.current.clone().lerp(playerPosition, 0.7);
+      // Look slightly above the player for better view
+      const lookTarget = playerPosition.clone().add(new THREE.Vector3(0, 0.5, 0));
       camera.lookAt(lookTarget);
-    } else {
-      // If player not found, default to looking at planet center
-      camera.lookAt(planetCenterRef.current);
     }
   });
   
@@ -86,7 +69,7 @@ export default function GameComponent() {
     >
       <GameProvider>
         <div className="relative w-full h-full">
-          <Canvas shadows camera={{ position: [0, 10, 15], fov: 40 }}>
+          <Canvas shadows camera={{ position: [0, 6, 10], fov: 50 }}>
             <color attach="background" args={['#000020']} />
             <ambientLight intensity={0.7} />
             <directionalLight

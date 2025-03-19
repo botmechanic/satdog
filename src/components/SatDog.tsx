@@ -11,16 +11,28 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
   const tailRef = useRef<THREE.Mesh>(null);
   const earLeftRef = useRef<THREE.Mesh>(null);
   const earRightRef = useRef<THREE.Mesh>(null);
+  const legFrontLeftRef = useRef<THREE.Mesh>(null);
+  const legFrontRightRef = useRef<THREE.Mesh>(null);
+  const legBackLeftRef = useRef<THREE.Mesh>(null);
+  const legBackRightRef = useRef<THREE.Mesh>(null);
+  const headRef = useRef<THREE.Mesh>(null);
+  const bodyRef = useRef<THREE.Mesh>(null);
   
-  const [position, setPosition] = useState<THREE.Vector3>(new THREE.Vector3(0, 5, 0));
+  const [position, setPosition] = useState<THREE.Vector3>(new THREE.Vector3(0, 0.25, 0));
   const [onGround, setOnGround] = useState(false);
   const [jumping, setJumping] = useState(false);
   const [isWaggingTail, setIsWaggingTail] = useState(false);
   const [tailWagSpeed, setTailWagSpeed] = useState(0);
   const [tailWagTime, setTailWagTime] = useState(0);
   const [happyJump, setHappyJump] = useState(false);
+  const [isMoving, setIsMoving] = useState(false);
+  const [idleTimer, setIdleTimer] = useState(0);
+  const [idleAnimation, setIdleAnimation] = useState<'breathe' | 'lookAround' | 'stretch'>('breathe');
   
-  const planetRadius = 4;
+  // Platform dimensions (must match Planet.tsx)
+  const PLATFORM_WIDTH = 20;
+  const PLATFORM_LENGTH = 20;
+  
   const { components, collectComponent, gameState, showTitle, collectedComponents } = useGame();
 
   // Set up keyboard controls for WASD and Space
@@ -52,7 +64,7 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
   useFrame((state, delta) => {
     if (!dogRef.current || gameState !== 'playing' || showTitle) return;
     
-    // Animate tail wagging
+    // Animate tail wagging for celebration
     if (isWaggingTail && tailRef.current) {
       setTailWagTime(prev => prev + delta * tailWagSpeed);
       
@@ -75,138 +87,169 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
           dogRef.current.position.add(jumpDir.multiplyScalar(jumpHeight));
         }
       }
+    } 
+    // Idle animations when not moving or celebrating
+    else if (!isMoving && !isWaggingTail && onGround) {
+      // Increment idle timer
+      setIdleTimer(prev => prev + delta);
+      
+      // Switch between idle animations every few seconds
+      if (idleTimer > 5) {
+        setIdleAnimation(prev => {
+          const animations: ('breathe' | 'lookAround' | 'stretch')[] = ['breathe', 'lookAround', 'stretch'];
+          const currentIndex = animations.indexOf(prev);
+          const nextIndex = (currentIndex + 1) % animations.length;
+          return animations[nextIndex];
+        });
+        setIdleTimer(0);
+      }
+      
+      // Apply different idle animations
+      if (bodyRef.current && headRef.current && tailRef.current && 
+          earLeftRef.current && earRightRef.current) {
+        
+        // Subtle breathing animation (body slightly moves up and down)
+        if (idleAnimation === 'breathe') {
+          const breatheScale = 1 + Math.sin(state.clock.elapsedTime * 1.5) * 0.02;
+          bodyRef.current.scale.set(1, breatheScale, 1);
+          
+          // Gentle tail movement
+          const tailAngle = Math.sin(state.clock.elapsedTime * 2) * 0.1;
+          tailRef.current.rotation.set(0, tailAngle, Math.PI / 4);
+        }
+        
+        // Looking around animation
+        else if (idleAnimation === 'lookAround') {
+          // Head turns from side to side
+          const lookAngle = Math.sin(state.clock.elapsedTime * 0.8) * 0.3;
+          headRef.current.rotation.y = lookAngle;
+          
+          // Ears perk up when looking
+          const earAngle = Math.abs(Math.sin(state.clock.elapsedTime)) * 0.1;
+          earLeftRef.current.rotation.z = -earAngle - 0.1;
+          earRightRef.current.rotation.z = earAngle + 0.1;
+        }
+        
+        // Stretching animation
+        else if (idleAnimation === 'stretch') {
+          // Calculate stretch phase (0 to 1 to 0 over 5 seconds)
+          const stretchPhase = Math.min(idleTimer, 5 - idleTimer) / 2.5;
+          
+          // Body stretches forward
+          bodyRef.current.scale.set(1, 1, 1 + stretchPhase * 0.2);
+          
+          // Tail stretches up during stretch
+          tailRef.current.rotation.set(-stretchPhase * 0.5, 0, Math.PI / 4);
+          
+          // Gentle ear movement
+          earLeftRef.current.rotation.z = -stretchPhase * 0.2 - 0.1;
+          earRightRef.current.rotation.z = stretchPhase * 0.2 + 0.1;
+        }
+      }
     }
     
     // Get keyboard state
     const { forward, backward, left, right, jump } = getKeyboardControls() as { forward: boolean; backward: boolean; left: boolean; right: boolean; jump: boolean };
     
     // ---------------------------------------------------------------
-    // SIMPLIFIED PLANETOID MOVEMENT SYSTEM - KINEMATIC APPROACH
+    // SIMPLIFIED FLAT TERRAIN MOVEMENT SYSTEM
     // ---------------------------------------------------------------
     
     // Basic state check - are we jumping?
     const isJumping = jumping;
     
-    // Direction from planet center to player (unit vector pointing "up" from surface)
-    const surfaceNormal = position.clone().normalize();
+    // Gravity is always downward in flat terrain
     
     // Project camera directions for intuitive controls based on view
     const cameraForward = new THREE.Vector3(0, 0, -1).applyQuaternion(state.camera.quaternion);
+    cameraForward.y = 0; // Project onto xz plane
+    cameraForward.normalize();
+    
     const cameraRight = new THREE.Vector3(1, 0, 0).applyQuaternion(state.camera.quaternion);
+    cameraRight.y = 0; // Project onto xz plane
+    cameraRight.normalize();
     
-    // Project camera directions onto the tangent plane at player's position
-    const projectedForward = cameraForward.clone()
-      .sub(surfaceNormal.clone().multiplyScalar(cameraForward.dot(surfaceNormal)))
-      .normalize();
-    
-    const projectedRight = cameraRight.clone()
-      .sub(surfaceNormal.clone().multiplyScalar(cameraRight.dot(surfaceNormal)))
-      .normalize();
-    
-    // Calculate input direction on the surface plane
+    // Calculate input direction on the horizontal plane
     const moveDirection = new THREE.Vector3();
-    if (forward) moveDirection.add(projectedForward);
-    if (backward) moveDirection.sub(projectedForward);
-    if (right) moveDirection.add(projectedRight);
-    if (left) moveDirection.sub(projectedRight);
+    if (forward) moveDirection.add(cameraForward);
+    if (backward) moveDirection.sub(cameraForward);
+    if (right) moveDirection.add(cameraRight);
+    if (left) moveDirection.sub(cameraRight);
+    
+    // Update movement state for animation system
+    const isCurrentlyMoving = moveDirection.length() > 0;
+    if (isMoving !== isCurrentlyMoving) {
+      setIsMoving(isCurrentlyMoving);
+      
+      // Reset idle timer when starting/stopping movement
+      if (!isCurrentlyMoving) {
+        setIdleTimer(0);
+        setIdleAnimation('breathe');
+      }
+    }
     
     // Normalize input direction if any input is given
     if (moveDirection.length() > 0) {
       moveDirection.normalize();
     }
     
-    // -------------------------------------------
-    // COMPLETELY NON-PHYSICAL MOVEMENT APPROACH
-    // -------------------------------------------
-    
     // Start with the current position
     const newPosition = position.clone();
     
-    
     // ----------------------------------------
-    // HANDLE MOVEMENT ALONG SURFACE 
+    // HANDLE MOVEMENT ALONG GROUND 
     // ----------------------------------------
     
-    // Move along the surface if input is given
+    // Move along the ground if input is given
     if (moveDirection.length() > 0) {
-      // Calculate the speed based on whether we're moving or jumping
-      const moveSpeed = 0.08; // Slow down movement for better control
+      const moveSpeed = 0.15; // Slightly faster on flat terrain
       
-      // Move along the surface in the input direction
-      newPosition.add(moveDirection.multiplyScalar(moveSpeed));
-      
-      // Keep track of animation state
-      // Slight tail wag while running
-      if (tailRef.current && !isWaggingTail) {
-        const runWagAngle = Math.sin(state.clock.elapsedTime * 8) * 0.3;
-        tailRef.current.rotation.y = runWagAngle;
-      }
+      // Move along the flat surface in the input direction
+      newPosition.x += moveDirection.x * moveSpeed;
+      newPosition.z += moveDirection.z * moveSpeed;
     }
     
     // ----------------------------------------
     // HANDLE JUMPING
     // ----------------------------------------
     
-    // Jumping uses a simple parabolic animation rather than physics
-    // This is much more stable than true physics
+    // Jumping with better physics for flat terrain
     
     // If jump button is pressed and we're not already jumping
     if (jump && !isJumping && onGround) {
       setJumping(true);
       setOnGround(false);
       
-      // Start jump sequence (no actual velocity involved)
-      const jumpDirection = surfaceNormal.clone();
-      
-      // Add a burst of upward movement (this will be constrained back to surface in later frames)
-      newPosition.add(jumpDirection.multiplyScalar(0.3));
+      // Add a burst of upward movement
+      newPosition.y += 0.5;
     }
     
-    // If we're in the middle of a jump, simulate it with a simple parabola
-    // This would normally be timer-based, but we'll use distance for simplicity
+    // If we're in the middle of a jump, simulate a parabola
     if (isJumping) {
-      const distFromPlanet = newPosition.length();
+      // Simple gravity effect
+      newPosition.y -= 0.1;
       
-      // Check if we're beyond the maximal jump height
-      if (distFromPlanet > planetRadius + 1.5) {
-        // Start falling back down
-        const fallVector = surfaceNormal.clone().multiplyScalar(-0.1);
-        newPosition.add(fallVector);
-      } else if (distFromPlanet < planetRadius + 0.5) {
-        // Reached ground - end jump
-        setJumping(false);
-        setOnGround(true);
-      } else {
-        // Still moving upward
-        const jumpStep = surfaceNormal.clone().multiplyScalar(0.05);
-        newPosition.add(jumpStep);
-      }
-    }
-    
-    // ----------------------------------------
-    // ENFORCE PLANET CONSTRAINTS
-    // ----------------------------------------
-    
-    // Always maintain correct distance from planet surface
-    // Calculate the direction from planet center to new position
-    const dirToPlanet = newPosition.clone().normalize();
-    
-    // For non-jumping state, lock to surface exactly
-    if (!isJumping) {
-      // Fix position to be exactly at surface distance
-      newPosition.copy(dirToPlanet.multiplyScalar(planetRadius + 1.0));
-      setOnGround(true);
-    } else {
-      // During jump, prevent falling through surface
-      const newHeight = newPosition.length();
-      if (newHeight < planetRadius + 1.0) {
-        newPosition.copy(dirToPlanet.multiplyScalar(planetRadius + 1.0));
+      // Check if we've hit the ground
+      if (newPosition.y <= 0.25) { // 0.25 is the ground level for the dog
+        newPosition.y = 0.25;
         setJumping(false);
         setOnGround(true);
       }
     }
     
-    // Update position state directly (no physics/velocity system)
+    // ----------------------------------------
+    // ENFORCE TERRAIN BOUNDARIES
+    // ----------------------------------------
+    
+    // Keep the dog within platform boundaries
+    const halfWidth = PLATFORM_WIDTH / 2 - 1;
+    const halfLength = PLATFORM_LENGTH / 2 - 1;
+    
+    // Clamp position to platform boundaries
+    newPosition.x = Math.max(-halfWidth, Math.min(halfWidth, newPosition.x));
+    newPosition.z = Math.max(-halfLength, Math.min(halfLength, newPosition.z));
+    
+    // Update position state
     setPosition(newPosition);
     
     // Update mesh position
@@ -214,35 +257,41 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
     
     // Make SatDog look in the direction of movement
     if (moveDirection.length() > 0.1) {
-      // Calculate rotation to face movement direction
-      const targetQuaternion = new THREE.Quaternion();
-      
-      // Get up direction from current position
-      const upVector = newPosition.clone().normalize();
-      
-      // Create a basis where Y is up, and Z is the movement direction
-      const tempUp = upVector;
-      const tempForward = moveDirection.clone();
-      const tempRight = new THREE.Vector3().crossVectors(tempForward, tempUp).normalize();
-      tempForward.crossVectors(tempUp, tempRight).normalize();
-      
-      // Create rotation matrix and convert to quaternion
-      const rotMatrix = new THREE.Matrix4().makeBasis(tempRight, tempUp, tempForward);
-      targetQuaternion.setFromRotationMatrix(rotMatrix);
-      
-      // Apply rotation to dog model
-      dogRef.current.quaternion.copy(targetQuaternion);
-    } else {
-      // When not moving, just orient to planet surface
-      const normal = newPosition.clone().normalize();
-      const up = new THREE.Vector3(0, 1, 0);
-      const quaternion = new THREE.Quaternion().setFromUnitVectors(up, normal);
-      dogRef.current.quaternion.copy(quaternion);
+      // Calculate rotation to face movement direction (much simpler for flat terrain)
+      const angle = Math.atan2(moveDirection.x, moveDirection.z);
+      dogRef.current.rotation.y = angle;
     }
     
     // Animate legs when moving
-    if ((forward || backward || left || right) && onGround) {
-      // Add leg animations here if desired
+    if (isMoving && onGround && 
+        legFrontLeftRef.current && legFrontRightRef.current && 
+        legBackLeftRef.current && legBackRightRef.current) {
+      
+      // Calculate leg animation cycle based on movement speed and time
+      const legCycle = state.clock.elapsedTime * 8;
+      
+      // Front legs move in alternating pattern (diagonal pairs)
+      // Front left and back right move together, front right and back left move together
+      const frontLeftAngle = Math.sin(legCycle) * 0.4;
+      const frontRightAngle = Math.sin(legCycle + Math.PI) * 0.4;
+      
+      // Apply rotations to legs
+      legFrontLeftRef.current.rotation.x = frontLeftAngle;
+      legFrontRightRef.current.rotation.x = frontRightAngle;
+      legBackLeftRef.current.rotation.x = frontRightAngle;
+      legBackRightRef.current.rotation.x = frontLeftAngle;
+      
+      // Also add a slight tail wag during movement
+      if (tailRef.current && !isWaggingTail) {
+        const runWagAngle = Math.sin(legCycle) * 0.3;
+        tailRef.current.rotation.y = runWagAngle;
+      }
+      
+      // Subtle body bob during movement for more lively animation
+      if (bodyRef.current) {
+        const bobHeight = Math.abs(Math.sin(legCycle * 0.5)) * 0.05;
+        bodyRef.current.position.y = bobHeight;
+      }
     }
     
     // Check for component collection
@@ -270,9 +319,9 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
   }, [ref]);
 
   return (
-    <group ref={dogRef} position={[0, 5, 0]}>
+    <group ref={dogRef} position={[0, 0.25, 0]}>
       {/* Body - with glow effect when collecting */}
-      <mesh castShadow>
+      <mesh ref={bodyRef} castShadow>
         <boxGeometry args={[0.8, 0.5, 1.2]} />
         <meshStandardMaterial 
           color="#f9a825" 
@@ -283,7 +332,7 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
       </mesh>
       
       {/* Head */}
-      <mesh position={[0, 0.3, 0.5]} castShadow>
+      <mesh ref={headRef} position={[0, 0.3, 0.5]} castShadow>
         <boxGeometry args={[0.6, 0.6, 0.6]} />
         <meshStandardMaterial 
           color="#fbc02d" 
@@ -330,19 +379,19 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
       </mesh>
       
       {/* Legs */}
-      <mesh position={[-0.3, -0.4, 0.4]} castShadow>
+      <mesh ref={legFrontLeftRef} position={[-0.3, -0.4, 0.4]} castShadow>
         <boxGeometry args={[0.2, 0.4, 0.2]} />
         <meshStandardMaterial color="#e0a029" roughness={0.7} />
       </mesh>
-      <mesh position={[0.3, -0.4, 0.4]} castShadow>
+      <mesh ref={legFrontRightRef} position={[0.3, -0.4, 0.4]} castShadow>
         <boxGeometry args={[0.2, 0.4, 0.2]} />
         <meshStandardMaterial color="#e0a029" roughness={0.7} />
       </mesh>
-      <mesh position={[-0.3, -0.4, -0.4]} castShadow>
+      <mesh ref={legBackLeftRef} position={[-0.3, -0.4, -0.4]} castShadow>
         <boxGeometry args={[0.2, 0.4, 0.2]} />
         <meshStandardMaterial color="#e0a029" roughness={0.7} />
       </mesh>
-      <mesh position={[0.3, -0.4, -0.4]} castShadow>
+      <mesh ref={legBackRightRef} position={[0.3, -0.4, -0.4]} castShadow>
         <boxGeometry args={[0.2, 0.4, 0.2]} />
         <meshStandardMaterial color="#e0a029" roughness={0.7} />
       </mesh>
