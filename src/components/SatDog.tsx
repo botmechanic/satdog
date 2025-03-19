@@ -108,16 +108,18 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
       }
     }
     
-    // Jump
+    // Jump - add force in the direction away from planet center
     if (jump && onGround) {
-      newVelocity.y = 3; // Reduced from 5 to 3 for less extreme jumps
+      const jumpDirection = position.clone().normalize();
+      newVelocity.add(jumpDirection.multiplyScalar(3)); // Jump along normal direction
       setOnGround(false);
       setJumping(true);
     }
     
-    // Apply gravity
+    // Apply gravity towards planet center when in air
     if (!onGround) {
-      newVelocity.y -= delta * 5; // Reduced from 9.8 to 5 for slower falls
+      const gravityDirection = position.clone().normalize().multiplyScalar(-1);
+      newVelocity.add(gravityDirection.multiplyScalar(delta * 7));
     }
     
     // Update position
@@ -125,23 +127,34 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
     
     // Planet gravity - force the character to stick to the surface
     const distanceFromCenter = newPosition.length();
+    const normal = newPosition.clone().normalize();
     
-    if (distanceFromCenter < planetRadius + 1) {
-      // Calculate normal from the center to the player
-      const normal = newPosition.clone().normalize();
-      
+    // Distance from planet surface
+    const distanceFromSurface = distanceFromCenter - planetRadius;
+    
+    if (distanceFromSurface < 1.1) {
       // Position the player at the right height above the surface
       newPosition.copy(normal.multiplyScalar(planetRadius + 1));
       
-      // Align velocity to the planet's surface
-      const up = normal.clone();
-      newVelocity.sub(up.multiplyScalar(newVelocity.dot(normal)));
-      
-      if (!onGround && jumping) {
-        setOnGround(true);
-        setJumping(false);
+      // If the dog is close enough to the surface or falling towards it, snap to surface
+      if (distanceFromSurface < 1.05 || newVelocity.dot(normal) < 0) {
+        // Align velocity to the planet's surface by removing any component in the direction of the normal
+        const up = normal.clone();
+        newVelocity.sub(up.multiplyScalar(newVelocity.dot(normal)));
+        
+        // Apply friction to prevent sliding
+        newVelocity.multiplyScalar(0.9);
+        
+        if (!onGround) {
+          setOnGround(true);
+          if (jumping) {
+            setJumping(false);
+          }
+        }
       }
     } else {
+      // Apply stronger gravity when further from the planet
+      newVelocity.add(normal.multiplyScalar(-delta * 10));
       setOnGround(false);
     }
     
