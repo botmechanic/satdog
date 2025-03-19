@@ -72,7 +72,8 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
       if (happyJump && dogRef.current) {
         const jumpHeight = Math.sin(tailWagTime * 5) * 0.2;
         if (jumpHeight > 0) {
-          dogRef.current.position.y += jumpHeight;
+          const jumpDir = position.clone().normalize();
+          dogRef.current.position.add(jumpDir.multiplyScalar(jumpHeight));
         }
       }
     }
@@ -80,26 +81,64 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
     // Get keyboard state
     const { forward, backward, left, right, jump } = getKeyboardControls() as { forward: boolean; backward: boolean; left: boolean; right: boolean; jump: boolean };
     
-    // Calculate direction relative to the camera
-    const camera = state.camera;
-    const direction = new THREE.Vector3();
-    const frontVector = new THREE.Vector3(0, 0, (backward ? 1 : 0) - (forward ? 1 : 0));
-    const sideVector = new THREE.Vector3((left ? 1 : 0) - (right ? 1 : 0), 0, 0);
-    direction.subVectors(frontVector, sideVector)
-      .normalize()
-      .multiplyScalar(delta * 2); // Reduced from 5 to 2 for slower movement
-      
-    // Apply camera's Y-rotation to movement direction
-    direction.applyAxisAngle(new THREE.Vector3(0, 1, 0), camera.rotation.y);
+    // ------------------------------
+    // Calculate movement direction
+    // ------------------------------
     
-    // Only apply horizontal movement (x and z)
-    const horizontalVelocity = new THREE.Vector3(direction.x, 0, direction.z);
+    // Get the up direction based on current position (points away from planet center)
+    const upDirection = position.clone().normalize();
     
-    // Update velocity
+    // Create a coordinate system for the planet surface at the player's position
+    const forwardDirection = new THREE.Vector3(0, 0, 1);
+    if (Math.abs(upDirection.y) < 0.99) {
+      // If not at poles, compute a tangent direction to planet
+      forwardDirection.crossVectors(new THREE.Vector3(0, 1, 0), upDirection).normalize();
+    }
+    
+    // Get camera's forward and right directions projected onto the planet surface
+    const cameraForward = new THREE.Vector3(0, 0, -1).applyQuaternion(state.camera.quaternion);
+    const cameraRight = new THREE.Vector3(1, 0, 0).applyQuaternion(state.camera.quaternion);
+    
+    // Project camera directions onto the tangent plane
+    const projectedForward = cameraForward.clone().sub(upDirection.clone().multiplyScalar(cameraForward.dot(upDirection))).normalize();
+    const projectedRight = cameraRight.clone().sub(upDirection.clone().multiplyScalar(cameraRight.dot(upDirection))).normalize();
+    
+    // Calculate movement direction based on input and camera orientation
+    const moveDirection = new THREE.Vector3();
+    if (forward) moveDirection.add(projectedForward);
+    if (backward) moveDirection.sub(projectedForward);
+    if (right) moveDirection.add(projectedRight);
+    if (left) moveDirection.sub(projectedRight);
+    
+    if (moveDirection.length() > 0) {
+      moveDirection.normalize();
+    }
+    
+    // ------------------------------
+    // Apply physics
+    // ------------------------------
+    
+    // Current distance from planet center
+    const distanceFromCenter = position.length();
+    const distanceFromSurface = distanceFromCenter - planetRadius;
+    
+    // Determine if the character is on the ground
+    const isNowOnGround = distanceFromSurface < 1.1;
+    if (isNowOnGround !== onGround) {
+      setOnGround(isNowOnGround);
+      if (isNowOnGround && jumping) {
+        setJumping(false);
+      }
+    }
+    
+    // Update velocity based on inputs and state
     const newVelocity = velocity.clone();
-    if ((forward || backward || left || right) && onGround) {
-      newVelocity.x = horizontalVelocity.x;
-      newVelocity.z = horizontalVelocity.z;
+    
+    // Apply movement if on ground
+    if (isNowOnGround && moveDirection.length() > 0) {
+      // Apply movement force
+      const moveSpeed = 5.0 * delta;
+      newVelocity.add(moveDirection.multiplyScalar(moveSpeed));
       
       // Slight tail wag while running
       if (tailRef.current && !isWaggingTail) {
@@ -108,67 +147,79 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
       }
     }
     
-    // Jump - add force in the direction away from planet center
-    if (jump && onGround) {
-      const jumpDirection = position.clone().normalize();
-      newVelocity.add(jumpDirection.multiplyScalar(3)); // Jump along normal direction
-      setOnGround(false);
+    // Jump if on ground and jump key pressed
+    if (jump && isNowOnGround && !jumping) {
+      newVelocity.add(upDirection.multiplyScalar(4.0));
       setJumping(true);
-    }
-    
-    // Apply gravity towards planet center when in air
-    if (!onGround) {
-      const gravityDirection = position.clone().normalize().multiplyScalar(-1);
-      newVelocity.add(gravityDirection.multiplyScalar(delta * 7));
-    }
-    
-    // Update position
-    const newPosition = position.clone().add(newVelocity.clone().multiplyScalar(delta));
-    
-    // Planet gravity - force the character to stick to the surface
-    const distanceFromCenter = newPosition.length();
-    const normal = newPosition.clone().normalize();
-    
-    // Distance from planet surface
-    const distanceFromSurface = distanceFromCenter - planetRadius;
-    
-    if (distanceFromSurface < 1.1) {
-      // Position the player at the right height above the surface
-      newPosition.copy(normal.multiplyScalar(planetRadius + 1));
-      
-      // If the dog is close enough to the surface or falling towards it, snap to surface
-      if (distanceFromSurface < 1.05 || newVelocity.dot(normal) < 0) {
-        // Align velocity to the planet's surface by removing any component in the direction of the normal
-        const up = normal.clone();
-        newVelocity.sub(up.multiplyScalar(newVelocity.dot(normal)));
-        
-        // Apply friction to prevent sliding
-        newVelocity.multiplyScalar(0.9);
-        
-        if (!onGround) {
-          setOnGround(true);
-          if (jumping) {
-            setJumping(false);
-          }
-        }
-      }
-    } else {
-      // Apply stronger gravity when further from the planet
-      newVelocity.add(normal.multiplyScalar(-delta * 10));
       setOnGround(false);
     }
     
-    // Update state
+    // Apply gravity (always toward planet center)
+    const gravityForce = 10.0 * delta;
+    newVelocity.add(upDirection.clone().multiplyScalar(-gravityForce));
+    
+    // Apply damping/friction
+    if (isNowOnGround) {
+      // Higher friction on ground
+      newVelocity.multiplyScalar(0.9);
+    } else {
+      // Lower air resistance
+      newVelocity.multiplyScalar(0.98);
+    }
+    
+    // ------------------------------
+    // Update position
+    // ------------------------------
+    
+    // Calculate new position
+    const newPosition = position.clone().add(newVelocity);
+    
+    // Ensure player stays at correct distance from planet
+    const newDistanceFromCenter = newPosition.length();
+    const newUpDirection = newPosition.clone().normalize();
+    
+    if (newDistanceFromCenter < planetRadius + 1.0) {
+      // If too close to planet, push back to surface
+      newPosition.copy(newUpDirection.multiplyScalar(planetRadius + 1.0));
+      
+      // Remove velocity component toward planet
+      const normalVelocity = newVelocity.dot(newUpDirection);
+      if (normalVelocity < 0) {
+        newVelocity.sub(newUpDirection.clone().multiplyScalar(normalVelocity));
+        newVelocity.multiplyScalar(0.8); // Add bounce damping
+      }
+    }
+    
+    // Update state with new values
     setPosition(newPosition);
     setVelocity(newVelocity);
     
-    // Update the mesh position
+    // Update mesh position
     dogRef.current.position.copy(newPosition);
     
     // Make SatDog look in the direction of movement
-    if ((forward || backward || left || right) && horizontalVelocity.length() > 0) {
-      const targetRotation = Math.atan2(horizontalVelocity.x, horizontalVelocity.z);
-      dogRef.current.rotation.y = targetRotation;
+    if (moveDirection.length() > 0.1) {
+      // Calculate rotation to face movement direction
+      const targetQuaternion = new THREE.Quaternion();
+      
+      // Create a basis where Y is up, and Z is the movement direction
+      const tempUp = newUpDirection;
+      const tempForward = moveDirection.clone();
+      const tempRight = new THREE.Vector3().crossVectors(tempForward, tempUp).normalize();
+      tempForward.crossVectors(tempUp, tempRight).normalize();
+      
+      // Create rotation matrix and convert to quaternion
+      const rotMatrix = new THREE.Matrix4().makeBasis(tempRight, tempUp, tempForward);
+      targetQuaternion.setFromRotationMatrix(rotMatrix);
+      
+      // Apply rotation to dog model
+      dogRef.current.quaternion.copy(targetQuaternion);
+    } else {
+      // When not moving, just orient to planet surface
+      const normal = newPosition.clone().normalize();
+      const up = new THREE.Vector3(0, 1, 0);
+      const quaternion = new THREE.Quaternion().setFromUnitVectors(up, normal);
+      dogRef.current.quaternion.copy(quaternion);
     }
     
     // Animate legs when moving
@@ -189,22 +240,16 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
     });
   });
 
-  // Orient the dog to the planet surface
+  // Pass the dog ref to the forwarded ref
   useEffect(() => {
     if (dogRef.current) {
-      const normal = position.clone().normalize();
-      const up = new THREE.Vector3(0, 1, 0);
-      const quaternion = new THREE.Quaternion().setFromUnitVectors(up, normal);
-      dogRef.current.quaternion.copy(quaternion);
+      if (typeof ref === 'function') {
+        ref(dogRef.current);
+      } else if (ref) {
+        ref.current = dogRef.current;
+      }
     }
-    
-    // Pass the dog ref to the forwarded ref
-    if (typeof ref === 'function') {
-      ref(dogRef.current);
-    } else if (ref) {
-      ref.current = dogRef.current;
-    }
-  }, [position, ref]);
+  }, [ref]);
 
   return (
     <group ref={dogRef} position={[0, 5, 0]}>
