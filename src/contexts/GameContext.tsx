@@ -38,35 +38,35 @@ export function useGame() {
 const INITIAL_COMPONENTS: ComponentData[] = [
   {
     type: 'Antenna',
-    position: [8, 1, 0],
+    position: [4.5, 1, 0],
     collected: false,
     description: 'Sends and receives signals from Earth',
     fact: 'Satellite IoT antennas are optimized for low power, long-range communication!'
   },
   {
     type: 'Modem',
-    position: [0, 1, 8],
+    position: [0, 1, 4.5],
     collected: false,
     description: 'Sends short burst messages',
     fact: 'IoT modems can send small packets of data (20-50 bytes) perfect for status updates!'
   },
   {
     type: 'SolarPanel',
-    position: [-8, 1, 0],
+    position: [-4.5, 1, 0],
     collected: false,
     description: 'Harvests energy from the sun',
     fact: 'Satellite IoT devices can run for years on harvested solar energy!'
   },
   {
     type: 'Battery',
-    position: [0, 1, -8],
+    position: [0, 1, -4.5],
     collected: false,
     description: 'Stores energy for night operations',
     fact: 'Modern batteries keep satellites operating during eclipse periods in orbit!'
   },
   {
     type: 'OrbitStabilizer',
-    position: [5, 1, 5],
+    position: [3, 1, 3],
     collected: false,
     description: 'Keeps the satellite pointed correctly',
     fact: 'A global network of satellites can connect 75 billion IoT devices by 2025!'

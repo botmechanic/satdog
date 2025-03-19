@@ -24,36 +24,16 @@ export default function Planet() {
     const features = [];
     
     // Generate mountains
-    for (let i = 0; i < 8; i++) {
-      const theta = (i / 8) * Math.PI * 2;
+    for (let i = 0; i < 6; i++) {
+      const theta = (i / 6) * Math.PI * 2;
       const phi = Math.random() * Math.PI * 0.8;
-      const r = 7; // Planet radius
+      const r = 4; // Planet radius
       const x = r * Math.sin(phi) * Math.cos(theta);
       const y = r * Math.cos(phi);
       const z = r * Math.sin(phi) * Math.sin(theta);
       
       features.push({
         type: 'mountain',
-        position: [x, y, z],
-        scale: 0.8 + Math.random() * 0.7,
-        rotation: new THREE.Quaternion().setFromUnitVectors(
-          new THREE.Vector3(0, 1, 0),
-          new THREE.Vector3(x, y, z).normalize()
-        )
-      });
-    }
-    
-    // Generate craters
-    for (let i = 0; i < 7; i++) {
-      const theta = (i / 7) * Math.PI * 2 + 0.5;
-      const phi = Math.random() * Math.PI * 0.7 + Math.PI * 0.2;
-      const r = 7.05; // Slightly above the planet surface
-      const x = r * Math.sin(phi) * Math.cos(theta);
-      const y = r * Math.cos(phi);
-      const z = r * Math.sin(phi) * Math.sin(theta);
-      
-      features.push({
-        type: 'crater',
         position: [x, y, z],
         scale: 0.5 + Math.random() * 0.4,
         rotation: new THREE.Quaternion().setFromUnitVectors(
@@ -63,11 +43,31 @@ export default function Planet() {
       });
     }
     
+    // Generate craters
+    for (let i = 0; i < 5; i++) {
+      const theta = (i / 5) * Math.PI * 2 + 0.5;
+      const phi = Math.random() * Math.PI * 0.7 + Math.PI * 0.2;
+      const r = 4.05; // Slightly above the planet surface
+      const x = r * Math.sin(phi) * Math.cos(theta);
+      const y = r * Math.cos(phi);
+      const z = r * Math.sin(phi) * Math.sin(theta);
+      
+      features.push({
+        type: 'crater',
+        position: [x, y, z],
+        scale: 0.3 + Math.random() * 0.3,
+        rotation: new THREE.Quaternion().setFromUnitVectors(
+          new THREE.Vector3(0, 1, 0),
+          new THREE.Vector3(x, y, z).normalize()
+        )
+      });
+    }
+    
     // Generate lakes
-    for (let i = 0; i < 3; i++) {
-      const theta = (i / 3) * Math.PI * 2 + 1.0;
+    for (let i = 0; i < 2; i++) {
+      const theta = (i / 2) * Math.PI * 2 + 1.0;
       const phi = Math.random() * Math.PI * 0.6 + Math.PI * 0.3;
-      const r = 7.05; // Slightly above the planet surface
+      const r = 4.05; // Slightly above the planet surface
       const x = r * Math.sin(phi) * Math.cos(theta);
       const y = r * Math.cos(phi);
       const z = r * Math.sin(phi) * Math.sin(theta);
@@ -75,7 +75,7 @@ export default function Planet() {
       features.push({
         type: 'lake',
         position: [x, y, z],
-        scale: 0.6 + Math.random() * 0.5,
+        scale: 0.4 + Math.random() * 0.3,
         rotation: new THREE.Quaternion().setFromUnitVectors(
           new THREE.Vector3(0, 1, 0),
           new THREE.Vector3(x, y, z).normalize()
@@ -89,7 +89,7 @@ export default function Planet() {
   return (
     <group>
       {/* The main planet sphere */}
-      <Sphere ref={planetRef} args={[7, 64, 64]} position={[0, 0, 0]} receiveShadow castShadow>
+      <Sphere ref={planetRef} args={[4, 64, 64]} position={[0, 0, 0]} receiveShadow castShadow>
         <MeshDistortMaterial 
           color="#4d8ab5" 
           distort={0.3} 
@@ -100,12 +100,12 @@ export default function Planet() {
       </Sphere>
       
       {/* Atmospheric glow */}
-      <Sphere args={[7.5, 32, 32]} position={[0, 0, 0]}>
+      <Sphere args={[4.3, 32, 32]} position={[0, 0, 0]}>
         <meshBasicMaterial color="#7fb8e6" transparent opacity={0.1} />
       </Sphere>
       
       {/* Cloud layer */}
-      <Sphere ref={cloudsRef} args={[7.2, 32, 32]} position={[0, 0, 0]}>
+      <Sphere ref={cloudsRef} args={[4.15, 32, 32]} position={[0, 0, 0]}>
         <meshStandardMaterial 
           color="#ffffff" 
           transparent 
@@ -121,7 +121,7 @@ export default function Planet() {
       </Sphere>
       
       {/* Orbital ring */}
-      <Ring args={[9, 9.5, 64]} position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
+      <Ring args={[5.5, 5.8, 64]} position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <meshStandardMaterial 
           color="#a1c6e7" 
           side={THREE.DoubleSide} 

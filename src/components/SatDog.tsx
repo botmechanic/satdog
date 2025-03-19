@@ -12,7 +12,7 @@ export default function SatDog() {
   const earLeftRef = useRef<THREE.Mesh>(null);
   const earRightRef = useRef<THREE.Mesh>(null);
   
-  const [position, setPosition] = useState<THREE.Vector3>(new THREE.Vector3(0, 8, 0));
+  const [position, setPosition] = useState<THREE.Vector3>(new THREE.Vector3(0, 5, 0));
   const [velocity, setVelocity] = useState<THREE.Vector3>(new THREE.Vector3(0, 0, 0));
   const [onGround, setOnGround] = useState(false);
   const [jumping, setJumping] = useState(false);
@@ -21,7 +21,7 @@ export default function SatDog() {
   const [tailWagTime, setTailWagTime] = useState(0);
   const [happyJump, setHappyJump] = useState(false);
   
-  const planetRadius = 7;
+  const planetRadius = 4;
   const { components, collectComponent, gameState, showTitle, collectedComponents } = useGame();
 
   // Set up keyboard controls for WASD and Space

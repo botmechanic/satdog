@@ -24,9 +24,9 @@ export default function GameComponent() {
     >
       <GameProvider>
         <div className="relative w-full h-full">
-          <Canvas shadows camera={{ position: [0, 12, 18], fov: 45 }}>
+          <Canvas shadows camera={{ position: [0, 7, 10], fov: 50 }}>
             <color attach="background" args={['#000020']} />
-            <ambientLight intensity={0.5} />
+            <ambientLight intensity={0.6} />
             <directionalLight
               position={[10, 10, 10]}
               intensity={0.8}
@@ -39,7 +39,8 @@ export default function GameComponent() {
               shadow-camera-top={20}
               shadow-camera-bottom={-20}
             />
-            <pointLight position={[0, 10, 0]} intensity={0.5} color="#ffffff" />
+            <pointLight position={[0, 6, 0]} intensity={0.7} color="#ffffff" />
+            <spotLight position={[0, 8, 8]} angle={0.5} penumbra={0.5} intensity={0.8} castShadow />
             <Suspense fallback={null}>
               <Planet />
               <SatDog />
@@ -48,10 +49,12 @@ export default function GameComponent() {
             <OrbitControls 
               enablePan={false} 
               maxPolarAngle={Math.PI / 2 - 0.1} 
-              minDistance={12} 
-              maxDistance={20}
+              minDistance={8} 
+              maxDistance={15}
               enableDamping={true}
               dampingFactor={0.05}
+              minPolarAngle={Math.PI / 6}
+              target={[0, 0, 0]}
             />
             <Stats />
           </Canvas>
