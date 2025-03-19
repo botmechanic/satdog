@@ -122,27 +122,33 @@ function Component({ type, position, description, fact }: {
       {/* The actual component */}
       {getComponentGeometry(type)}
       
-      {/* Tooltip */}
+      {/* Tooltip with background */}
       {hovered && (
-        <Billboard position={[0, 1, 0]}>
+        <Billboard position={[0, 1.5, 0]}>
+          {/* Background panel for better readability */}
+          <mesh position={[0, 0, -0.01]}>
+            <planeGeometry args={[2.2, 1.0]} />
+            <meshBasicMaterial color="#000000" opacity={0.8} transparent />
+          </mesh>
+          
           <Text
             fontSize={0.2}
             color="#ffffff"
             anchorX="center"
             anchorY="middle"
-            outlineWidth={0.01}
+            outlineWidth={0.02}
             outlineColor="#000000"
             maxWidth={2}
           >
             {`${type}: ${description}`}
           </Text>
           <Text
-            position={[0, -0.3, 0]}
+            position={[0, -0.4, 0]}
             fontSize={0.15}
-            color="#ffff00"
+            color="#00ffff"
             anchorX="center"
             anchorY="middle"
-            outlineWidth={0.01}
+            outlineWidth={0.02}
             outlineColor="#000000"
             maxWidth={2}
           >
