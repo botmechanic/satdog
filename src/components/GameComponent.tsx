@@ -23,54 +23,33 @@ import { GameProvider } from '@/contexts/GameContext';
 import { MultiplayerProvider } from '@/contexts/MultiplayerContext';
 import * as THREE from 'three';
 
-// Fortnite-style camera that follows closely behind the player
-function FortniteCamera({ playerRef }: { playerRef: React.RefObject<THREE.Group | null> }) {
+// Simple camera that follows behind the player
+function SimpleCamera({ playerRef }: { playerRef: React.RefObject<THREE.Group | null> }) {
   const { camera } = useThree();
-  const cameraPositionRef = useRef(new THREE.Vector3(0, 2, 4));
   
   useFrame(() => {
     if (playerRef.current) {
       // Get the player's position
-      const playerPosition = playerRef.current.position.clone();
+      const playerPosition = playerRef.current.position;
       
-      // Fortnite-style camera setup - much closer to player
-      const cameraHeight = 2;  // Lower camera height for over-the-shoulder view
-      const cameraDistance = 4;  // Closer camera for more immersive feel
+      // Simple camera positioning
+      const cameraHeight = 3;
+      const cameraDistance = 6;
       
-      // Get the player's forward direction (based on rotation)
+      // Get the player's rotation
       const playerRotation = playerRef.current.rotation.y;
       const offsetX = -Math.sin(playerRotation) * cameraDistance;
       const offsetZ = -Math.cos(playerRotation) * cameraDistance;
       
-      // Add slight horizontal offset for over-the-shoulder view
-      const shoulderOffset = new THREE.Vector3(
-        Math.cos(playerRotation) * 0.7, // Right shoulder offset
-        0,
-        Math.sin(playerRotation) * 0.7
-      );
-      
-      // Calculate ideal camera position with shoulder offset
-      const idealPosition = new THREE.Vector3(
-        playerPosition.x + offsetX + shoulderOffset.x,
+      // Update camera position directly (no lerp for better performance)
+      camera.position.set(
+        playerPosition.x + offsetX,
         playerPosition.y + cameraHeight,
-        playerPosition.z + offsetZ + shoulderOffset.z
+        playerPosition.z + offsetZ
       );
       
-      // Smoothly move the camera with faster response for tighter control
-      cameraPositionRef.current.lerp(idealPosition, 0.15);
-      
-      // Update camera position
-      camera.position.copy(cameraPositionRef.current);
-      
-      // Look slightly above and ahead of the player (aiming position)
-      const lookTarget = playerPosition.clone().add(
-        new THREE.Vector3(
-          Math.sin(playerRotation) * 10, // Look far ahead in movement direction
-          0.8, // Slightly above player height
-          Math.cos(playerRotation) * 10
-        )
-      );
-      camera.lookAt(lookTarget);
+      // Look at player
+      camera.lookAt(playerPosition);
     }
   });
   
@@ -98,9 +77,9 @@ export default function GameComponent() {
             <div className="absolute inset-0 pointer-events-auto" style={{ zIndex: 1 }}>
               <Canvas 
                 shadows={false} // Disable shadows for improved performance
-                camera={{ position: [0, 2, 4], fov: 70 }} // Lower position and wider FOV for Fortnite-like view
-                dpr={[1, 1.5]} // Limit pixel ratio for performance
-                performance={{ min: 0.5 }} // Allow automatic performance scaling
+                camera={{ position: [0, 5, 10], fov: 60 }} // Higher and further back position
+                dpr={[0.5, 1]} // More aggressive pixel ratio limitation for performance
+                performance={{ min: 0.3 }} // More aggressive performance scaling
                 style={{ position: 'absolute', touchAction: 'none' }}
                 tabIndex={0} // Make canvas focusable for keyboard input
                 className="focus:outline-none" // Remove outline when focused
@@ -116,11 +95,8 @@ export default function GameComponent() {
                 <Suspense fallback={null}>
                   <Planet />
                   <SatDog ref={playerRef} />
-                  <EnvironmentalStories />
-                  <DataVisualization />
-                  <OtherPlayers />
                   <Components />
-                  <FortniteCamera playerRef={playerRef} />
+                  <SimpleCamera playerRef={playerRef} />
                 </Suspense>
               </Canvas>
             </div>
@@ -139,14 +115,7 @@ export default function GameComponent() {
                 <ControlsInfo />
                 <NavigationSystem />
                 
-                {/* Educational components need proper pointer events */}
-                <div className="ui-overlay pointer-events-auto">
-                  <SpaceEducation />
-                  <SatelliteTechnologies />
-                  <SpaceIndustryApplications />
-                  <SatelliteConstellations />
-                  <IridiumIoTShowcase />
-                </div>
+                {/* Removed educational components for better performance */}
               </div>
             </div>
           </div>

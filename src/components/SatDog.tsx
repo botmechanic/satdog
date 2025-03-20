@@ -19,14 +19,21 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
   const headRef = useRef<THREE.Mesh>(null);
   const bodyRef = useRef<THREE.Mesh>(null);
   
+  // Position state with React state
   const [position, setPosition] = useState<THREE.Vector3>(new THREE.Vector3(0, 0.25, 0));
-  const [onGround, setOnGround] = useState(false);
-  const [jumping, setJumping] = useState(false);
+  
+  // Physics-related states with useRef instead of useState to prevent render loops
+  const physicsState = useRef({
+    onGround: true,
+    jumping: false,
+    isMoving: false
+  });
+  
+  // Animation states
   const [isWaggingTail, setIsWaggingTail] = useState(false);
   const [tailWagSpeed, setTailWagSpeed] = useState(0);
   const [tailWagTime, setTailWagTime] = useState(0);
   const [happyJump, setHappyJump] = useState(false);
-  const [isMoving, setIsMoving] = useState(false);
   const [idleTimer, setIdleTimer] = useState(0);
   const [idleAnimation, setIdleAnimation] = useState<'breathe' | 'lookAround' | 'stretch'>('breathe');
   
@@ -90,7 +97,7 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
       }
     } 
     // Idle animations when not moving or celebrating
-    else if (!isMoving && !isWaggingTail && onGround) {
+    else if (!physicsState.current.isMoving && !isWaggingTail && physicsState.current.onGround) {
       // Increment idle timer
       setIdleTimer(prev => prev + delta);
       
@@ -161,8 +168,8 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
     // SIMPLIFIED FLAT TERRAIN MOVEMENT SYSTEM
     // ---------------------------------------------------------------
     
-    // Basic state check - are we jumping?
-    const isJumping = jumping;
+    // Get physics state from ref
+    const isJumping = physicsState.current.jumping;
     
     // Gravity is always downward in flat terrain
     
@@ -184,8 +191,8 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
     
     // Update movement state for animation system
     const isCurrentlyMoving = moveDirection.length() > 0;
-    if (isMoving !== isCurrentlyMoving) {
-      setIsMoving(isCurrentlyMoving);
+    if (physicsState.current.isMoving !== isCurrentlyMoving) {
+      physicsState.current.isMoving = isCurrentlyMoving;
       
       // Reset idle timer when starting/stopping movement
       if (!isCurrentlyMoving) {
@@ -224,35 +231,34 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
     // HANDLE JUMPING
     // ----------------------------------------
     
-    // Fortnite-style jumping with better physics and higher jumps
+    // Simpler jumping mechanics
     
     // If jump button is pressed and we're not already jumping
-    if (jump && !isJumping && onGround) {
-      setJumping(true);
-      setOnGround(false);
+    if (jump && !physicsState.current.jumping && physicsState.current.onGround) {
+      physicsState.current.jumping = true;
+      physicsState.current.onGround = false;
       
-      // Add a stronger burst of upward movement for higher jumps
-      newPosition.y += 1.0; // Increased jump height
+      // Add upward movement for jumps
+      newPosition.y += 1.0;
     }
     
-    // If we're in the middle of a jump, simulate a parabola with Fortnite-like floaty feel
-    if (isJumping) {
-      // More gradual gravity effect for floaty jumps
+    // If we're in the middle of a jump, apply simplified gravity
+    if (physicsState.current.jumping) {
+      // Apply gravity
       newPosition.y -= 0.15;
       
-      // Add slight forward momentum during jumps (in direction of movement)
+      // Add minimal air control
       if (moveDirection.length() > 0) {
-        // Extra momentum while in air
         const airControlBoost = 0.02;
         newPosition.x += moveDirection.x * airControlBoost;
         newPosition.z += moveDirection.z * airControlBoost;
       }
       
       // Check if we've hit the ground
-      if (newPosition.y <= 0.25) { // 0.25 is the ground level
+      if (newPosition.y <= 0.25) {
         newPosition.y = 0.25;
-        setJumping(false);
-        setOnGround(true);
+        physicsState.current.jumping = false;
+        physicsState.current.onGround = true;
       }
     }
     
@@ -281,8 +287,8 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
         z: newPosition.z 
       },
       rotation,
-      isMoving,
-      isJumping
+      physicsState.current.isMoving,
+      physicsState.current.jumping
     );
     
     // Store position in localStorage for navigation system
@@ -294,7 +300,7 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
     }));
     
     // Animate legs when moving
-    if (isMoving && onGround && 
+    if (physicsState.current.isMoving && physicsState.current.onGround && 
         legFrontLeftRef.current && legFrontRightRef.current && 
         legBackLeftRef.current && legBackRightRef.current) {
       
