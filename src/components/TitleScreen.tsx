@@ -11,7 +11,7 @@ export default function TitleScreen() {
   if (!showTitle) return null;
   
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-gray-900 to-black text-white z-50 overflow-hidden">
+    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-gray-900 to-black text-white z-50 overflow-hidden pointer-events-auto">
       {/* Background polygon mesh effect */}
       <div className="absolute inset-0 opacity-20">
         {Array.from({ length: 20 }).map((_, i) => (
@@ -73,8 +73,9 @@ export default function TitleScreen() {
       </div>
       
       <button 
-        className="px-10 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition text-xl font-bold shadow-lg shadow-green-500/30 transform hover:scale-105"
+        className="px-10 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition text-xl font-bold shadow-lg shadow-green-500/30 transform hover:scale-105 pointer-events-auto cursor-pointer"
         onClick={() => {
+          console.log("Start Mission button clicked");
           setShowTitle(false);
           // If already joined the game via username input, don't ask again
           if (!hasJoinedGame) {

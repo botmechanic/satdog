@@ -114,10 +114,15 @@ export default function GameComponent() {
             {/* UI overlay elements with proper z-index and pointer-events */}
             <div className="absolute inset-0 pointer-events-none">
               <div className="relative w-full h-full z-10">
+                {/* Critical UI elements that need pointer events */}
+                <div className="ui-overlay">
+                  <TitleScreen />
+                  <UsernameInput />
+                </div>
+                
+                {/* Other UI elements */}
                 <AssemblyUI />
                 <ControlsInfo />
-                <TitleScreen />
-                <UsernameInput />
                 <NavigationSystem />
                 
                 {/* Educational components need proper pointer events */}
