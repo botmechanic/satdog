@@ -23,41 +23,53 @@ import { GameProvider } from '@/contexts/GameContext';
 import { MultiplayerProvider } from '@/contexts/MultiplayerContext';
 import * as THREE from 'three';
 
-// Camera that follows the player on flat terrain
-function FollowCamera({ playerRef }: { playerRef: React.RefObject<THREE.Group | null> }) {
+// Fortnite-style camera that follows closely behind the player
+function FortniteCamera({ playerRef }: { playerRef: React.RefObject<THREE.Group | null> }) {
   const { camera } = useThree();
-  const cameraPositionRef = useRef(new THREE.Vector3(0, 15, 20));
+  const cameraPositionRef = useRef(new THREE.Vector3(0, 2, 4));
   
   useFrame(() => {
     if (playerRef.current) {
       // Get the player's position
       const playerPosition = playerRef.current.position.clone();
       
-      // Enhanced camera setup for infinite terrain
-      // Higher camera position with greater distance for better view
-      const cameraHeight = 15;  // Increased from 8 for better overview
-      const cameraDistance = 20;  // Increased from 12 for wider view
+      // Fortnite-style camera setup - much closer to player
+      const cameraHeight = 2;  // Lower camera height for over-the-shoulder view
+      const cameraDistance = 4;  // Closer camera for more immersive feel
       
-      // Get the player's forward direction (based on their rotation)
+      // Get the player's forward direction (based on rotation)
       const playerRotation = playerRef.current.rotation.y;
       const offsetX = -Math.sin(playerRotation) * cameraDistance;
       const offsetZ = -Math.cos(playerRotation) * cameraDistance;
       
-      // Calculate ideal camera position
-      const idealPosition = new THREE.Vector3(
-        playerPosition.x + offsetX,
-        playerPosition.y + cameraHeight,
-        playerPosition.z + offsetZ
+      // Add slight horizontal offset for over-the-shoulder view
+      const shoulderOffset = new THREE.Vector3(
+        Math.cos(playerRotation) * 0.7, // Right shoulder offset
+        0,
+        Math.sin(playerRotation) * 0.7
       );
       
-      // Smoothly move the camera
-      cameraPositionRef.current.lerp(idealPosition, 0.05);
+      // Calculate ideal camera position with shoulder offset
+      const idealPosition = new THREE.Vector3(
+        playerPosition.x + offsetX + shoulderOffset.x,
+        playerPosition.y + cameraHeight,
+        playerPosition.z + offsetZ + shoulderOffset.z
+      );
       
-      // Update camera position and make it look at player
+      // Smoothly move the camera with faster response for tighter control
+      cameraPositionRef.current.lerp(idealPosition, 0.15);
+      
+      // Update camera position
       camera.position.copy(cameraPositionRef.current);
       
-      // Look slightly above the player for better view
-      const lookTarget = playerPosition.clone().add(new THREE.Vector3(0, 0.5, 0));
+      // Look slightly above and ahead of the player (aiming position)
+      const lookTarget = playerPosition.clone().add(
+        new THREE.Vector3(
+          Math.sin(playerRotation) * 10, // Look far ahead in movement direction
+          0.8, // Slightly above player height
+          Math.cos(playerRotation) * 10
+        )
+      );
       camera.lookAt(lookTarget);
     }
   });
@@ -86,7 +98,7 @@ export default function GameComponent() {
             <div className="absolute inset-0 pointer-events-auto" style={{ zIndex: 1 }}>
               <Canvas 
                 shadows={false} // Disable shadows for improved performance
-                camera={{ position: [0, 15, 20], fov: 65 }} // Wider field of view and initial position
+                camera={{ position: [0, 2, 4], fov: 70 }} // Lower position and wider FOV for Fortnite-like view
                 dpr={[1, 1.5]} // Limit pixel ratio for performance
                 performance={{ min: 0.5 }} // Allow automatic performance scaling
                 style={{ position: 'absolute', touchAction: 'none' }}
@@ -108,7 +120,7 @@ export default function GameComponent() {
                   <DataVisualization />
                   <OtherPlayers />
                   <Components />
-                  <FollowCamera playerRef={playerRef} />
+                  <FortniteCamera playerRef={playerRef} />
                 </Suspense>
               </Canvas>
             </div>

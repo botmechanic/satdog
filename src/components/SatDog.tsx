@@ -166,13 +166,13 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
     
     // Gravity is always downward in flat terrain
     
-    // Project camera directions for intuitive controls based on view
+    // Get camera directions for Fortnite-style movement (always relative to camera view)
     const cameraForward = new THREE.Vector3(0, 0, -1).applyQuaternion(state.camera.quaternion);
-    cameraForward.y = 0; // Project onto xz plane
+    cameraForward.y = 0; // Keep movement on ground plane
     cameraForward.normalize();
     
     const cameraRight = new THREE.Vector3(1, 0, 0).applyQuaternion(state.camera.quaternion);
-    cameraRight.y = 0; // Project onto xz plane
+    cameraRight.y = 0; // Keep movement on ground plane
     cameraRight.normalize();
     
     // Calculate input direction on the horizontal plane
@@ -206,16 +206,16 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
     // HANDLE MOVEMENT ALONG GROUND 
     // ----------------------------------------
     
-    // Move along the ground if input is given
+    // Move along the ground if input is given - Fortnite-style faster movement
     if (moveDirection.length() > 0) {
-      // Even faster movement speed for the infinite world
-      const moveSpeed = 0.8; // Much faster to cover larger distances
+      // Faster movement speed for Fortnite-like feel
+      const moveSpeed = 1.2; // Even faster base speed for responsive movement
       
       // Add sprint capability with shift key
       const sprint = !!controls.sprint;
-      const finalSpeed = sprint ? moveSpeed * 2.0 : moveSpeed;
+      const finalSpeed = sprint ? moveSpeed * 1.6 : moveSpeed; // Sprinting is 1.6x normal speed
       
-      // Move along the flat surface in the input direction
+      // Apply movement in camera-relative direction (Fortnite style)
       newPosition.x += moveDirection.x * finalSpeed;
       newPosition.z += moveDirection.z * finalSpeed;
     }
@@ -224,24 +224,32 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
     // HANDLE JUMPING
     // ----------------------------------------
     
-    // Jumping with better physics for flat terrain
+    // Fortnite-style jumping with better physics and higher jumps
     
     // If jump button is pressed and we're not already jumping
     if (jump && !isJumping && onGround) {
       setJumping(true);
       setOnGround(false);
       
-      // Add a burst of upward movement
-      newPosition.y += 0.5;
+      // Add a stronger burst of upward movement for higher jumps
+      newPosition.y += 1.0; // Increased jump height
     }
     
-    // If we're in the middle of a jump, simulate a parabola
+    // If we're in the middle of a jump, simulate a parabola with Fortnite-like floaty feel
     if (isJumping) {
-      // Simple gravity effect
-      newPosition.y -= 0.1;
+      // More gradual gravity effect for floaty jumps
+      newPosition.y -= 0.15;
+      
+      // Add slight forward momentum during jumps (in direction of movement)
+      if (moveDirection.length() > 0) {
+        // Extra momentum while in air
+        const airControlBoost = 0.02;
+        newPosition.x += moveDirection.x * airControlBoost;
+        newPosition.z += moveDirection.z * airControlBoost;
+      }
       
       // Check if we've hit the ground
-      if (newPosition.y <= 0.25) { // 0.25 is the ground level for the dog
+      if (newPosition.y <= 0.25) { // 0.25 is the ground level
         newPosition.y = 0.25;
         setJumping(false);
         setOnGround(true);
