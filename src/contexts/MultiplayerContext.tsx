@@ -44,8 +44,13 @@ export function MultiplayerProvider({ children }: { children: ReactNode }) {
 
   // Function to join the game
   const joinGame = () => {
+    // Either connect via socket or force join for single player mode
     if (isConnected && !hasJoinedGame) {
       socketJoinGame(username || `Player-${Math.floor(Math.random() * 1000)}`);
+      setHasJoinedGame(true);
+    } else if (!isConnected) {
+      // Bypass connection requirements in deployed environment
+      console.log("Socket not connected, joining in single-player mode");
       setHasJoinedGame(true);
     }
   };

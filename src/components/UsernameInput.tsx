@@ -7,12 +7,21 @@ export default function UsernameInput() {
   const { setUsername, joinGame, isConnected, hasJoinedGame } = useMultiplayer();
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  // Force enable the button after 3 seconds for deployed environments
+  const [forceEnable, setForceEnable] = useState(false);
 
   // Focus the input when component mounts
   useEffect(() => {
     if (inputRef.current && !hasJoinedGame) {
       inputRef.current.focus();
     }
+    
+    // Handle connection timeout - force enable after 3 seconds
+    const timer = setTimeout(() => {
+      setForceEnable(true);
+    }, 3000);
+    
+    return () => clearTimeout(timer);
   }, [hasJoinedGame]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -20,6 +29,13 @@ export default function UsernameInput() {
     if (inputValue.trim()) {
       setUsername(inputValue.trim());
       joinGame();
+      
+      // If socket is not connected, force join anyway after setting username
+      if (!isConnected && forceEnable) {
+        console.log("Socket not connected, proceeding in single-player mode");
+        // Close the modal anyway
+        localStorage.setItem('username', inputValue.trim());
+      }
     }
   };
 
@@ -46,14 +62,14 @@ export default function UsernameInput() {
           
           <button
             type="submit"
-            disabled={!isConnected || !inputValue.trim()}
+            disabled={(!isConnected && !forceEnable) || !inputValue.trim()}
             className={`w-full py-2 px-4 rounded font-medium text-white transition-colors ${
-              isConnected && inputValue.trim()
+              (isConnected || forceEnable) && inputValue.trim()
                 ? 'bg-blue-600 hover:bg-blue-700'
                 : 'bg-slate-600 cursor-not-allowed'
             }`}
           >
-            {isConnected ? 'Join Game' : 'Connecting...'}
+            {isConnected ? 'Join Game' : forceEnable ? 'Join Anyway' : 'Connecting...'}
           </button>
         </form>
       </div>
