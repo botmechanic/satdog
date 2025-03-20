@@ -2,7 +2,7 @@
 
 import { Suspense, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Stats, KeyboardControls } from '@react-three/drei';
+import { KeyboardControls } from '@react-three/drei';
 import Planet from './Planet';
 import SatDog from './SatDog';
 import Components from './Components';
@@ -18,6 +18,7 @@ import SpaceIndustryApplications from './SpaceIndustryApplications';
 import SatelliteConstellations from './SatelliteConstellations';
 import EnvironmentalStories from './EnvironmentalStories';
 import DataVisualization from './DataVisualization';
+import IridiumIoTShowcase from './IridiumIoTShowcase';
 import { GameProvider } from '@/contexts/GameContext';
 import { MultiplayerProvider } from '@/contexts/MultiplayerContext';
 import * as THREE from 'three';
@@ -114,6 +115,7 @@ export default function GameComponent() {
             <SatelliteTechnologies />
             <SpaceIndustryApplications />
             <SatelliteConstellations />
+            <IridiumIoTShowcase />
           </div>
         </GameProvider>
       </MultiplayerProvider>

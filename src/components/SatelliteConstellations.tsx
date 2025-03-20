@@ -198,7 +198,17 @@ const SATELLITE_CONSTELLATIONS = [
       'Personal communications in remote areas'
     ],
     impact: 'The first and most established LEO constellation, providing reliable global connectivity for critical applications where no other communication options exist.',
-    imageUrl: '/constellations/iridium.svg'
+    imageUrl: '/constellations/iridium.svg',
+    featured: true,
+    specialFeatures: [
+      'Unique 6-plane constellation design with 11 satellites per plane',
+      'Only satellite network with true pole-to-pole global coverage',
+      'Short-burst data (SBD) optimized for IoT applications',
+      'Certified for Global Maritime Distress and Safety System (GMDSS)',
+      'Cross-linked mesh network architecture for minimal ground infrastructure',
+      'Supports Iridium Certus® platform for high-quality voice and data'
+    ],
+    uniqueCapabilities: 'Iridium pioneered the use of Ka-band inter-satellite crosslinks, creating a fully meshed network where each satellite connects to four others. This architecture provides resilience against ground station outages and enables true global coverage including polar regions critical for aviation, maritime, and military operations.'
   },
   {
     id: 'globalstar',
@@ -367,13 +377,22 @@ interface ConstellationCardProps {
 }
 
 function ConstellationCard({ constellation, onClose }: ConstellationCardProps) {
-  const [activeTab, setActiveTab] = useState<'satellites'|'performance'|'technology'|'applications'>('satellites');
+  const [activeTab, setActiveTab] = useState<'satellites'|'performance'|'technology'|'applications'|'special'>('satellites');
+
+  // Determine if this is the featured Iridium constellation
+  const isIridium = constellation.id === 'iridium';
 
   return (
-    <div className="bg-slate-800 rounded-lg p-4 max-w-md w-full shadow-lg border border-blue-500">
+    <div className={`bg-slate-800 rounded-lg p-4 max-w-md w-full shadow-lg ${isIridium ? 'border-2 border-blue-400' : 'border border-blue-500'}`}>
+      {isIridium && (
+        <div className="mb-3 px-3 py-1 bg-blue-900/50 rounded-lg text-center">
+          <span className="text-xs font-bold text-blue-300">FEATURED CONSTELLATION</span>
+        </div>
+      )}
+      
       <div className="flex justify-between items-center mb-3">
         <div>
-          <h3 className="text-xl font-bold text-blue-300">{constellation.name}</h3>
+          <h3 className={`text-xl font-bold ${isIridium ? 'text-blue-300' : 'text-blue-400'}`}>{constellation.name}</h3>
           <p className="text-xs text-gray-300">Operated by: {constellation.operator}</p>
         </div>
         <button 
@@ -412,6 +431,14 @@ function ConstellationCard({ constellation, onClose }: ConstellationCardProps) {
         >
           Applications
         </button>
+        {isIridium && (
+          <button
+            className={`flex-1 py-1 text-xs ${activeTab === 'special' ? 'text-cyan-300 border-b border-cyan-400' : 'text-gray-400 hover:text-white'}`}
+            onClick={() => setActiveTab('special')}
+          >
+            Special
+          </button>
+        )}
       </div>
       
       {/* Content based on selected tab */}
@@ -424,6 +451,15 @@ function ConstellationCard({ constellation, onClose }: ConstellationCardProps) {
                 <span className="text-white font-medium">{value}</span>
               </div>
             ))}
+            
+            {isIridium && (
+              <div className="mt-4 p-2 bg-blue-900/20 rounded-lg">
+                <p className="text-xs text-blue-200">
+                  Iridium&apos;s unique constellation design consists of 6 orbital planes with 11 satellites in each plane, 
+                  providing complete pole-to-pole coverage without gaps.
+                </p>
+              </div>
+            )}
           </div>
         )}
         
@@ -435,6 +471,15 @@ function ConstellationCard({ constellation, onClose }: ConstellationCardProps) {
                 <span className="text-white font-medium">{value}</span>
               </div>
             ))}
+            
+            {isIridium && (
+              <div className="mt-4 p-2 bg-blue-900/20 rounded-lg">
+                <p className="text-xs text-blue-200">
+                  While other networks may offer higher peak speeds, Iridium focuses on reliable, consistent 
+                  connectivity everywhere on Earth, making it ideal for critical communications.
+                </p>
+              </div>
+            )}
           </div>
         )}
         
@@ -446,6 +491,15 @@ function ConstellationCard({ constellation, onClose }: ConstellationCardProps) {
                 <span className="text-white font-medium">{value}</span>
               </div>
             ))}
+            
+            {isIridium && (
+              <div className="mt-4 p-2 bg-blue-900/20 rounded-lg">
+                <p className="text-xs text-blue-200">
+                  Iridium pioneered the use of inter-satellite links, creating a fully meshed network where each satellite 
+                  connects to four others, enabling true global coverage and network resilience.
+                </p>
+              </div>
+            )}
           </div>
         )}
         
@@ -457,6 +511,20 @@ function ConstellationCard({ constellation, onClose }: ConstellationCardProps) {
               ))}
             </ul>
             <p className="text-xs text-blue-200 italic">{constellation.impact}</p>
+          </div>
+        )}
+        
+        {activeTab === 'special' && isIridium && 'specialFeatures' in constellation && (
+          <div>
+            <h4 className="text-sm font-bold text-cyan-300 mb-2">Unique Capabilities</h4>
+            <ul className="text-xs text-white list-disc pl-5 space-y-1 mb-3">
+              {(constellation as { specialFeatures: string[] }).specialFeatures.map((feature, index) => (
+                <li key={index}>{feature}</li>
+              ))}
+            </ul>
+            <div className="mt-4 p-3 bg-blue-900/30 rounded-lg">
+              <p className="text-xs text-blue-200">{(constellation as { uniqueCapabilities: string }).uniqueCapabilities}</p>
+            </div>
           </div>
         )}
       </div>
@@ -768,7 +836,7 @@ export default function SatelliteConstellations() {
             {/* Footer */}
             <div className="p-3 border-t border-slate-700 bg-slate-800">
               <div className="text-xs text-blue-300">
-                Learn about the world\'s major satellite networks in operation and development
+                Learn about the world&apos;s major satellite networks in operation and development
               </div>
             </div>
           </div>

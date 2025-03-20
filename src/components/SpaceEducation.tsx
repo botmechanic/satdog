@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { useGame } from '@/contexts/GameContext';
 
 // Educational fact data about satellite technology
@@ -14,7 +13,30 @@ const SATELLITE_FACTS = [
     image: '/satellites/iridium.svg',
     source: 'Iridium Communications',
     companyLogo: '/logos/iridium.svg',
-    category: 'communications'
+    category: 'communications',
+    featured: true
+  },
+  {
+    id: 'iridium-certus',
+    title: 'Iridium Certus®',
+    content: 'Iridium Certus is a multi-service communications platform providing reliable, truly global connectivity for mission-critical applications.',
+    advanced: 'Operating on the upgraded Iridium NEXT constellation, Certus delivers high-quality voice, IP data, and IoT services with speeds up to 704 Kbps through compact, lightweight terminals.',
+    image: '/satellites/iridium-certus.svg',
+    source: 'Iridium Communications',
+    companyLogo: '/logos/iridium.svg',
+    category: 'communications',
+    featured: true
+  },
+  {
+    id: 'iridium-iot',
+    title: 'Iridium IoT Solutions',
+    content: 'Iridium provides global, two-way satellite communications for IoT applications in remote locations beyond cellular coverage.',
+    advanced: 'Iridium\'s Short Burst Data (SBD) service is specifically designed for IoT devices that need to transmit small amounts of data reliably from anywhere on Earth, even in extreme conditions.',
+    image: '/satellites/iridium-iot.svg',
+    source: 'Iridium Communications',
+    companyLogo: '/logos/iridium.svg',
+    category: 'iot',
+    featured: true
   },
   {
     id: 'starlink-1',
@@ -182,9 +204,18 @@ interface FactCardProps {
 // Fact card component
 function FactCard({ fact, onClose }: FactCardProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
+  
+  // Check if this is an Iridium featured fact
+  const isIridiumFeatured = fact.featured && fact.source === 'Iridium Communications';
 
   return (
-    <div className="bg-slate-800 rounded-lg p-4 max-w-md w-full shadow-lg border border-blue-400">
+    <div className={`bg-slate-800 rounded-lg p-4 max-w-md w-full shadow-lg ${isIridiumFeatured ? 'border-2 border-blue-400' : 'border border-blue-400'}`}>
+      {isIridiumFeatured && (
+        <div className="mb-3 px-3 py-1 bg-blue-900/50 rounded-lg text-center">
+          <span className="text-xs font-bold text-blue-300">IRIDIUM SPOTLIGHT</span>
+        </div>
+      )}
+      
       <div className="flex justify-between items-center mb-3">
         <h3 className="text-xl font-bold text-blue-300">{fact.title}</h3>
         <button 
@@ -198,7 +229,7 @@ function FactCard({ fact, onClose }: FactCardProps) {
       <div className="mb-4 flex gap-4">
         <div className="w-1/3 bg-slate-700 rounded p-2 flex items-center justify-center">
           {/* We'll create placeholder SVGs later */}
-          <div className="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center text-white">
+          <div className={`w-20 h-20 ${isIridiumFeatured ? 'bg-blue-600' : 'bg-blue-500'} rounded-full flex items-center justify-center text-white`}>
             {fact.category.charAt(0).toUpperCase()}
           </div>
         </div>
@@ -224,6 +255,15 @@ function FactCard({ fact, onClose }: FactCardProps) {
           <span>Source: {fact.source}</span>
         </div>
       </div>
+      
+      {isIridiumFeatured && (
+        <div className="mt-3 p-2 bg-blue-900/20 rounded-lg">
+          <p className="text-xs text-blue-200">
+            Iridium provides critical connectivity solutions for mobile assets in remote locations, 
+            offering reliable satellite services where traditional networks cannot reach.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -390,7 +430,7 @@ const COMPONENT_TO_EDUCATION: Record<string, {type: TabType, id: string}> = {
 };
 
 export default function SpaceEducation() {
-  const { gameState, showTitle, collectedComponents } = useGame();
+  const { gameState, showTitle } = useGame();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('facts');
   const [activeFact, setActiveFact] = useState<typeof SATELLITE_FACTS[0] | null>(null);
