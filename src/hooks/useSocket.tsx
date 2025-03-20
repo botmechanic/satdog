@@ -13,10 +13,12 @@ export const useSocket = () => {
     // Create the socket connection only on the client side
     if (typeof window === 'undefined') return;
 
-    // Create socket connection
+    // Create socket connection with timeout
     const socketInstance = io({
       path: '/api/socket',
       autoConnect: true,
+      timeout: 5000, // 5 second timeout for connection attempts
+      reconnectionAttempts: 2, // Only try to reconnect twice
     });
 
     // Set up event listeners
@@ -24,6 +26,12 @@ export const useSocket = () => {
       console.log('Connected to server with ID', socketInstance.id);
       setIsConnected(true);
       setSocketId(socketInstance.id);
+    });
+    
+    // Handle connection errors
+    socketInstance.on('connect_error', (err) => {
+      console.error('Socket connection error:', err.message);
+      // Don't prevent the game from starting despite connection errors
     });
 
     socketInstance.on('disconnect', () => {

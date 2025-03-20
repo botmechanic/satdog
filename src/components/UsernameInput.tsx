@@ -27,15 +27,17 @@ export default function UsernameInput() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputValue.trim()) {
-      setUsername(inputValue.trim());
+      // Always store the username locally first
+      const trimmedUsername = inputValue.trim();
+      localStorage.setItem('username', trimmedUsername);
+      
+      // Set username in context and join game
+      setUsername(trimmedUsername);
+      
+      // Join game (this will now always close the modal)
       joinGame();
       
-      // If socket is not connected, force join anyway after setting username
-      if (!isConnected && forceEnable) {
-        console.log("Socket not connected, proceeding in single-player mode");
-        // Close the modal anyway
-        localStorage.setItem('username', inputValue.trim());
-      }
+      console.log("Username set, joining game");
     }
   };
 
