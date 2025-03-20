@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { useSocket } from '@/hooks/useSocket';
 import { Player } from '@/server/socket';
 
@@ -42,22 +42,33 @@ export function MultiplayerProvider({ children }: { children: ReactNode }) {
   const [username, setUsername] = useState('');
   const [hasJoinedGame, setHasJoinedGame] = useState(false);
 
-  // Function to join the game
-  const joinGame = () => {
+  // Function to join the game - using useCallback to prevent recreation
+  const joinGame = useCallback(() => {
+    console.log("Joining game with username:", username);
+    
     if (!hasJoinedGame) {
-      // Always set joined game state to true to prevent freezing
-      setHasJoinedGame(true);
-      
-      // Try to connect via socket if possible
-      if (isConnected) {
-        socketJoinGame(username || `Player-${Math.floor(Math.random() * 1000)}`);
-        console.log("Connected to multiplayer server");
-      } else {
-        // Bypass connection requirements in deployed environment
-        console.log("Socket not connected, joining in single-player mode");
+      try {
+        // Always set joined game state to true to prevent freezing
+        setHasJoinedGame(true);
+        
+        // Try to connect via socket if possible (which is always false in current implementation)
+        if (isConnected) {
+          const playerName = username || `Player-${Math.floor(Math.random() * 1000)}`;
+          socketJoinGame(playerName);
+          console.log("Connected to multiplayer server");
+        } else {
+          // This is the path that always executes with current implementation
+          console.log("Socket not connected, joining in single-player mode");
+        }
+      } catch (error) {
+        console.error("Error joining game:", error);
+        // Even on error, set hasJoinedGame to true so UI can progress
+        setHasJoinedGame(true);
       }
+    } else {
+      console.log("Already joined game, ignoring join request");
     }
-  };
+  }, [hasJoinedGame, isConnected, socketJoinGame, username]);
 
   // Functions to handle player actions
   const updatePlayerPosition = (

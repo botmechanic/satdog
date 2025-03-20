@@ -18,12 +18,22 @@ export default function UsernameInput() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputValue.trim()) {
-      // Store the username and join game immediately
-      const trimmedUsername = inputValue.trim();
-      localStorage.setItem('username', trimmedUsername);
-      setUsername(trimmedUsername);
-      joinGame();
-      console.log("Username set, starting game");
+      try {
+        // Store the username and join game immediately
+        const trimmedUsername = inputValue.trim();
+        localStorage.setItem('username', trimmedUsername);
+        
+        // Set username first
+        setUsername(trimmedUsername);
+        
+        // Small delay before joining to ensure state updates properly
+        setTimeout(() => {
+          joinGame();
+          console.log("Username set, starting game");
+        }, 10);
+      } catch (error) {
+        console.error("Error during login:", error);
+      }
     }
   };
 

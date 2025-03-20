@@ -3,10 +3,10 @@ import type { Player } from '@/server/socket';
 
 // Mock socket hook that doesn't actually connect to any server
 export const useSocket = () => {
-  // Empty players object - no multiplayer functionality
+  // Use memo for static objects to prevent recreation on renders
   const [players] = useState<Record<string, Player>>({});
   
-  // Always return not connected
+  // Always return not connected - use direct constants
   const isConnected = false;
   const socketId = 'local-player';
 
