@@ -76,6 +76,8 @@ export default function TitleScreen() {
         className="px-10 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition text-xl font-bold shadow-lg shadow-green-500/30 transform hover:scale-105 pointer-events-auto cursor-pointer"
         onClick={() => {
           console.log("Start Mission button clicked");
+          // Store in localStorage that we've shown the title screen
+          localStorage.setItem('titleShown', 'true');
           setShowTitle(false);
           // If already joined the game via username input, don't ask again
           if (!hasJoinedGame) {

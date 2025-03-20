@@ -79,7 +79,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [collectedComponents, setCollectedComponents] = useState<ComponentType[]>([]);
   const [assembledComponents, setAssembledComponents] = useState<ComponentType[]>([]);
   const [gameState, setGameState] = useState<'playing' | 'assembling' | 'completed'>('playing');
-  const [showTitle, setShowTitle] = useState(true);
+  // Check if user has already passed the title screen
+  const titleShownBefore = typeof window !== 'undefined' && localStorage.getItem('titleShown') === 'true';
+  const [showTitle, setShowTitle] = useState(!titleShownBefore);
 
   const collectComponent = (type: ComponentType) => {
     setComponents(prev => 
