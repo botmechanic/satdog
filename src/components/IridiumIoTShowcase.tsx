@@ -255,8 +255,8 @@ export default function IridiumIoTShowcase() {
   // If a specific content is active, render just that
   if (activeSolution) {
     return (
-      <div className="absolute top-36 right-4 z-10 pointer-events-auto flex justify-end">
-        <div className="pointer-events-auto">
+      <div className="absolute top-36 right-4 z-50 pointer-events-auto flex justify-end">
+        <div className="ui-overlay">
           <SolutionCard solution={activeSolution} onClose={() => setActiveSolution(null)} />
         </div>
       </div>
@@ -265,8 +265,8 @@ export default function IridiumIoTShowcase() {
   
   if (activeCaseStudy) {
     return (
-      <div className="absolute top-36 right-4 z-10 pointer-events-auto flex justify-end">
-        <div className="pointer-events-auto">
+      <div className="absolute top-36 right-4 z-50 pointer-events-auto flex justify-end">
+        <div className="ui-overlay">
           <CaseStudyCard case={activeCaseStudy} onClose={() => setActiveCaseStudy(null)} />
         </div>
       </div>

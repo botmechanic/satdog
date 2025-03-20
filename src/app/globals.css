@@ -25,6 +25,26 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Fix for 3D canvas interaction with UI */
+canvas {
+  pointer-events: auto !important;
+}
+
+.pointer-events-auto {
+  pointer-events: auto !important;
+}
+
+.pointer-events-none {
+  pointer-events: none !important;
+}
+
+/* Special overlay for UI elements */
+.ui-overlay {
+  position: relative;
+  z-index: 50;
+  pointer-events: auto;
+}
+
 @keyframes orbit {
   0% {
     transform: translateX(-16px) translateY(16px) rotate(0deg) translateX(48px) rotate(0deg);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useGame } from '@/contexts/GameContext';
 
 // Additional satellite technologies data
@@ -434,8 +434,8 @@ export default function SatelliteTechnologies() {
   // If a specific content is active, render just that
   if (activeTechnology) {
     return (
-      <div className="absolute top-20 right-4 z-10 pointer-events-auto flex justify-end">
-        <div className="pointer-events-auto">
+      <div className="absolute top-20 right-4 z-50 pointer-events-auto flex justify-end">
+        <div className="ui-overlay">
           <TechnologyCard technology={activeTechnology} onClose={() => setActiveTechnology(null)} />
         </div>
       </div>
@@ -444,8 +444,8 @@ export default function SatelliteTechnologies() {
 
   if (activeArchitecture) {
     return (
-      <div className="absolute top-20 right-4 z-10 pointer-events-auto flex justify-end">
-        <div className="pointer-events-auto">
+      <div className="absolute top-20 right-4 z-50 pointer-events-auto flex justify-end">
+        <div className="ui-overlay">
           <ArchitectureCard architecture={activeArchitecture} onClose={() => setActiveArchitecture(null)} />
         </div>
       </div>
@@ -454,8 +454,8 @@ export default function SatelliteTechnologies() {
 
   if (activeApplication) {
     return (
-      <div className="absolute top-20 right-4 z-10 pointer-events-auto flex justify-end">
-        <div className="pointer-events-auto">
+      <div className="absolute top-20 right-4 z-50 pointer-events-auto flex justify-end">
+        <div className="ui-overlay">
           <ApplicationCard application={activeApplication} onClose={() => setActiveApplication(null)} />
         </div>
       </div>

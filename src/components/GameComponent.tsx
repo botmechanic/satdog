@@ -82,40 +82,54 @@ export default function GameComponent() {
       <MultiplayerProvider>
         <GameProvider>
           <div className="relative w-full h-full">
-            <Canvas 
-              shadows={false} // Disable shadows for improved performance
-              camera={{ position: [0, 15, 20], fov: 65 }} // Wider field of view and initial position
-              dpr={[1, 1.5]} // Limit pixel ratio for performance
-              performance={{ min: 0.5 }} // Allow automatic performance scaling
-            >
-              <color attach="background" args={['#000020']} />
-              <ambientLight intensity={0.7} />
-              <directionalLight
-                position={[10, 15, 10]}
-                intensity={0.8}
-                castShadow={false} // Disable expensive shadow casting
-              />
-              <pointLight position={[0, 6, 0]} intensity={0.7} color="#ffffff" />
-              <Suspense fallback={null}>
-                <Planet />
-                <SatDog ref={playerRef} />
-                <EnvironmentalStories />
-                <DataVisualization />
-                <OtherPlayers />
-                <Components />
-                <FollowCamera playerRef={playerRef} />
-              </Suspense>
-            </Canvas>
-            <AssemblyUI />
-            <ControlsInfo />
-            <TitleScreen />
-            <UsernameInput />
-            <NavigationSystem />
-            <SpaceEducation />
-            <SatelliteTechnologies />
-            <SpaceIndustryApplications />
-            <SatelliteConstellations />
-            <IridiumIoTShowcase />
+            {/* Canvas for 3D elements with pointer-events */}
+            <div className="absolute inset-0 pointer-events-auto">
+              <Canvas 
+                shadows={false} // Disable shadows for improved performance
+                camera={{ position: [0, 15, 20], fov: 65 }} // Wider field of view and initial position
+                dpr={[1, 1.5]} // Limit pixel ratio for performance
+                performance={{ min: 0.5 }} // Allow automatic performance scaling
+                style={{ position: 'absolute', touchAction: 'none' }}
+              >
+                <color attach="background" args={['#000020']} />
+                <ambientLight intensity={0.7} />
+                <directionalLight
+                  position={[10, 15, 10]}
+                  intensity={0.8}
+                  castShadow={false} // Disable expensive shadow casting
+                />
+                <pointLight position={[0, 6, 0]} intensity={0.7} color="#ffffff" />
+                <Suspense fallback={null}>
+                  <Planet />
+                  <SatDog ref={playerRef} />
+                  <EnvironmentalStories />
+                  <DataVisualization />
+                  <OtherPlayers />
+                  <Components />
+                  <FollowCamera playerRef={playerRef} />
+                </Suspense>
+              </Canvas>
+            </div>
+            
+            {/* UI overlay elements with proper z-index and pointer-events */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="relative w-full h-full z-10">
+                <AssemblyUI />
+                <ControlsInfo />
+                <TitleScreen />
+                <UsernameInput />
+                <NavigationSystem />
+                
+                {/* Educational components need proper pointer events */}
+                <div className="ui-overlay">
+                  <SpaceEducation />
+                  <SatelliteTechnologies />
+                  <SpaceIndustryApplications />
+                  <SatelliteConstellations />
+                  <IridiumIoTShowcase />
+                </div>
+              </div>
+            </div>
           </div>
         </GameProvider>
       </MultiplayerProvider>

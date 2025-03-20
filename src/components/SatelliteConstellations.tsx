@@ -709,8 +709,8 @@ export default function SatelliteConstellations() {
   // If a specific content is active, render just that
   if (activeConstellation) {
     return (
-      <div className="absolute top-52 right-4 z-10 pointer-events-auto flex justify-end">
-        <div className="pointer-events-auto">
+      <div className="absolute top-52 right-4 z-50 pointer-events-auto flex justify-end">
+        <div className="ui-overlay">
           <ConstellationCard constellation={activeConstellation} onClose={() => setActiveConstellation(null)} />
         </div>
       </div>
@@ -719,8 +719,8 @@ export default function SatelliteConstellations() {
   
   if (showingComparison) {
     return (
-      <div className="absolute top-52 right-4 z-10 pointer-events-auto flex justify-end">
-        <div className="pointer-events-auto">
+      <div className="absolute top-52 right-4 z-50 pointer-events-auto flex justify-end">
+        <div className="ui-overlay">
           <ComparisonCard onClose={() => setShowingComparison(false)} />
         </div>
       </div>
@@ -729,8 +729,8 @@ export default function SatelliteConstellations() {
   
   if (activeChallenge) {
     return (
-      <div className="absolute top-52 right-4 z-10 pointer-events-auto flex justify-end">
-        <div className="pointer-events-auto">
+      <div className="absolute top-52 right-4 z-50 pointer-events-auto flex justify-end">
+        <div className="ui-overlay">
           <TechnicalChallengeCard challenge={activeChallenge} onClose={() => setActiveChallenge(null)} />
         </div>
       </div>
