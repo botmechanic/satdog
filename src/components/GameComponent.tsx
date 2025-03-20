@@ -82,14 +82,16 @@ export default function GameComponent() {
       <MultiplayerProvider>
         <GameProvider>
           <div className="relative w-full h-full">
-            {/* Canvas for 3D elements with pointer-events */}
-            <div className="absolute inset-0 pointer-events-auto">
+            {/* Canvas for 3D elements with pointer-events and keyboard focus */}
+            <div className="absolute inset-0 pointer-events-auto" style={{ zIndex: 1 }}>
               <Canvas 
                 shadows={false} // Disable shadows for improved performance
                 camera={{ position: [0, 15, 20], fov: 65 }} // Wider field of view and initial position
                 dpr={[1, 1.5]} // Limit pixel ratio for performance
                 performance={{ min: 0.5 }} // Allow automatic performance scaling
                 style={{ position: 'absolute', touchAction: 'none' }}
+                tabIndex={0} // Make canvas focusable for keyboard input
+                className="focus:outline-none" // Remove outline when focused
               >
                 <color attach="background" args={['#000020']} />
                 <ambientLight intensity={0.7} />

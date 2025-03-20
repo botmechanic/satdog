@@ -442,7 +442,8 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
                 0
               ]}
             >
-              <sphereGeometry args={[0.08, 6, 6]} /> // Larger but less complex geometry
+              {/* Larger but less complex geometry */}
+              <sphereGeometry args={[0.08, 6, 6]} />
               <meshBasicMaterial 
                 color={i % 2 === 0 ? "#ffff00" : "#ff9500"} 
                 transparent 

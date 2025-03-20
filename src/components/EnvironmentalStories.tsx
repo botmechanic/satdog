@@ -1,7 +1,7 @@
 'use client';
 
-import { useRef, useMemo, useEffect, useState } from 'react';
-import { Billboard, Text, Html } from '@react-three/drei';
+import { useRef, useState } from 'react';
+import { Billboard, Text } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useGame } from '@/contexts/GameContext';
@@ -115,7 +115,14 @@ const STORY_SCENES = [
 ];
 
 // Simple representations of scene elements
-function SceneElement({ type, position, scale = 1, state = 'default' }) {
+interface SceneElementProps {
+  type: string;
+  position: [number, number, number];
+  scale?: number;
+  state?: string;
+}
+
+function SceneElement({ type, position, scale = 1, state = 'default' }: SceneElementProps) {
   const [x, y, z] = position;
   
   // Building element
@@ -325,8 +332,8 @@ function SceneElement({ type, position, scale = 1, state = 'default' }) {
     return (
       <group position={[x, y + 0.5, z]} scale={scale}>
         {/* Body */}
-        <mesh position={[0, 0, 0]}>
-          <capsuleGeometry args={[0.4, 0.8, 4, 8]} rotation={[0, 0, Math.PI/2]} />
+        <mesh position={[0, 0, 0]} rotation={[0, 0, Math.PI/2]}>
+          <capsuleGeometry args={[0.4, 0.8, 4, 8]} />
           <meshStandardMaterial color={color} />
         </mesh>
         {/* Head */}
@@ -359,11 +366,17 @@ function SceneElement({ type, position, scale = 1, state = 'default' }) {
 }
 
 // Create a data beam that shows satellite communication
-function DataBeam({ position, color = '#2196f3', pulseRate = 1 }) {
+interface DataBeamProps {
+  position: [number, number, number];
+  color?: string;
+  pulseRate?: number;
+}
+
+function DataBeam({ position, color = '#2196f3', pulseRate = 1 }: DataBeamProps) {
   const beamRef = useRef<THREE.Group>(null);
   const [time, setTime] = useState(0);
   
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     setTime(prev => prev + delta);
     if (beamRef.current) {
       beamRef.current.rotation.y += delta * 0.5;
@@ -524,7 +537,7 @@ function StoryScene({ scene }) {
 
 // Main component that manages all environmental story scenes
 export default function EnvironmentalStories() {
-  const { gameState, showTitle, components } = useGame();
+  const { gameState, showTitle } = useGame();
   
   // Don't render stories during title screen or assembly/completion states
   if (showTitle || gameState !== 'playing') return null;

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useGame } from '@/contexts/GameContext';
-import * as THREE from 'three';
 
 interface PlayerPosition {
   x: number;

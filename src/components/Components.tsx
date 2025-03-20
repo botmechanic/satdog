@@ -1,19 +1,21 @@
 'use client';
 
-import { useRef, useState, useMemo } from 'react';
+import { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Billboard, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import { useGame, ComponentType } from '@/contexts/GameContext';
 
-// Used to trigger educational content when components are collected
-const COMPONENT_TO_EDUCATION = {
+// Component type mapping example (for documentation purposes)
+/* 
+const componentEducationTypes = {
   'Antenna': 'iridium-1',
   'Modem': 'sat-comms',
   'SolarPanel': 'starlink-1',
   'Battery': 'globalstar',
   'OrbitStabilizer': 'kepler-laws'
 };
+*/
 
 // Get a consistent color for each component type
 const getComponentColor = (type: ComponentType): string => {
@@ -39,7 +41,7 @@ function PulsingRing({ color }: { color: string }) {
   const [scale, setScale] = useState(1);
   const [opacity, setOpacity] = useState(1);
   
-  useFrame((_, delta) => {
+  useFrame(() => {
     // Create pulsing effect for scale and opacity
     const newScale = 1 + Math.sin(Date.now() * 0.002) * 0.3;
     setScale(newScale);

@@ -27,7 +27,7 @@ function getChunkSeed(x: number, z: number) {
 // Component to render a single terrain chunk
 function TerrainChunk({ position, seed }: { position: [number, number, number], seed: number }) {
   const chunkRef = useRef<THREE.Group>(null);
-  const [chunkX, chunkY, chunkZ] = position;
+  const [chunkX, , chunkZ] = position; // Unused chunkY omitted
   
   // Create a seeded random generator for this chunk
   const random = seededRandom(seed);
