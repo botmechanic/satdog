@@ -150,7 +150,12 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
     }
     
     // Get keyboard state
-    const { forward, backward, left, right, jump } = getKeyboardControls() as { forward: boolean; backward: boolean; left: boolean; right: boolean; jump: boolean };
+    const controls = getKeyboardControls();
+    const forward = !!controls.forward;
+    const backward = !!controls.backward;
+    const left = !!controls.left;
+    const right = !!controls.right;
+    const jump = !!controls.jump;
     
     // ---------------------------------------------------------------
     // SIMPLIFIED FLAT TERRAIN MOVEMENT SYSTEM
@@ -207,7 +212,7 @@ const SatDog = forwardRef(function SatDog(props, ref: Ref<THREE.Group>) {
       const moveSpeed = 0.8; // Much faster to cover larger distances
       
       // Add sprint capability with shift key
-      const sprint = getKeyboardControls().sprint === true;
+      const sprint = !!controls.sprint;
       const finalSpeed = sprint ? moveSpeed * 2.0 : moveSpeed;
       
       // Move along the flat surface in the input direction

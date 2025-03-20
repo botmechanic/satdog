@@ -117,7 +117,7 @@ export default function GameComponent() {
             <div className="absolute inset-0 pointer-events-none">
               <div className="relative w-full h-full z-10">
                 {/* Critical UI elements that need pointer events */}
-                <div className="ui-overlay">
+                <div className="ui-overlay pointer-events-auto">
                   <TitleScreen />
                   <UsernameInput />
                 </div>
@@ -128,7 +128,7 @@ export default function GameComponent() {
                 <NavigationSystem />
                 
                 {/* Educational components need proper pointer events */}
-                <div className="ui-overlay">
+                <div className="ui-overlay pointer-events-auto">
                   <SpaceEducation />
                   <SatelliteTechnologies />
                   <SpaceIndustryApplications />
