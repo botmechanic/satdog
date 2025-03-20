@@ -4,40 +4,26 @@ import { useState, useRef, useEffect } from 'react';
 import { useMultiplayer } from '@/contexts/MultiplayerContext';
 
 export default function UsernameInput() {
-  const { setUsername, joinGame, isConnected, hasJoinedGame } = useMultiplayer();
+  const { setUsername, joinGame, hasJoinedGame } = useMultiplayer();
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
-  // Force enable the button after 3 seconds for deployed environments
-  const [forceEnable, setForceEnable] = useState(false);
 
   // Focus the input when component mounts
   useEffect(() => {
     if (inputRef.current && !hasJoinedGame) {
       inputRef.current.focus();
     }
-    
-    // Handle connection timeout - force enable after 3 seconds
-    const timer = setTimeout(() => {
-      setForceEnable(true);
-    }, 3000);
-    
-    return () => clearTimeout(timer);
   }, [hasJoinedGame]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputValue.trim()) {
-      // Always store the username locally first
+      // Store the username and join game immediately
       const trimmedUsername = inputValue.trim();
       localStorage.setItem('username', trimmedUsername);
-      
-      // Set username in context and join game
       setUsername(trimmedUsername);
-      
-      // Join game (this will now always close the modal)
       joinGame();
-      
-      console.log("Username set, joining game");
+      console.log("Username set, starting game");
     }
   };
 
@@ -64,14 +50,12 @@ export default function UsernameInput() {
           
           <button
             type="submit"
-            disabled={(!isConnected && !forceEnable) || !inputValue.trim()}
+            disabled={!inputValue.trim()}
             className={`w-full py-2 px-4 rounded font-medium text-white transition-colors ${
-              (isConnected || forceEnable) && inputValue.trim()
-                ? 'bg-blue-600 hover:bg-blue-700'
-                : 'bg-slate-600 cursor-not-allowed'
+              inputValue.trim() ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-600 cursor-not-allowed'
             }`}
           >
-            {isConnected ? 'Join Game' : forceEnable ? 'Join Anyway' : 'Connecting...'}
+            Start Game
           </button>
         </form>
       </div>

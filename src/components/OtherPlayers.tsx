@@ -7,20 +7,8 @@ import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 
 export default function OtherPlayers() {
-  const { players, currentPlayerId } = useMultiplayer();
-  
-  // Filter out the current player to only render other players
-  const otherPlayers = useMemo(() => {
-    return Object.values(players).filter(player => player.id !== currentPlayerId);
-  }, [players, currentPlayerId]);
-  
-  return (
-    <group>
-      {otherPlayers.map((player) => (
-        <OtherPlayer key={player.id} player={player} />
-      ))}
-    </group>
-  );
+  // With multiplayer disabled, we don't need to render other players
+  return null;
 }
 
 function OtherPlayer({ player }: { player: { id: string; username: string; position: { x: number; y: number; z: number }; rotation: number; isMoving: boolean; isJumping: boolean; } }) {

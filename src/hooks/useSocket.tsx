@@ -1,128 +1,30 @@
-import { useEffect, useState, useCallback } from 'react';
-import { io, Socket } from 'socket.io-client';
-import { ClientToServerEvents, ServerToClientEvents, Player } from '@/server/socket';
+import { useState, useCallback } from 'react';
+import type { Player } from '@/server/socket';
 
+// Mock socket hook that doesn't actually connect to any server
 export const useSocket = () => {
-  const [socket, setSocket] = useState<Socket<ServerToClientEvents, ClientToServerEvents> | null>(null);
-  const [players, setPlayers] = useState<Record<string, Player>>({});
-  const [isConnected, setIsConnected] = useState(false);
-  const [socketId, setSocketId] = useState<string | null>(null);
+  // Empty players object - no multiplayer functionality
+  const [players] = useState<Record<string, Player>>({});
+  
+  // Always return not connected
+  const isConnected = false;
+  const socketId = 'local-player';
 
-  // Initialize socket connection
-  useEffect(() => {
-    // Create the socket connection only on the client side
-    if (typeof window === 'undefined') return;
-
-    // Create socket connection with timeout
-    const socketInstance = io({
-      path: '/api/socket',
-      autoConnect: true,
-      timeout: 5000, // 5 second timeout for connection attempts
-      reconnectionAttempts: 2, // Only try to reconnect twice
-    });
-
-    // Set up event listeners
-    socketInstance.on('connect', () => {
-      console.log('Connected to server with ID', socketInstance.id);
-      setIsConnected(true);
-      setSocketId(socketInstance.id);
-    });
-    
-    // Handle connection errors
-    socketInstance.on('connect_error', (err) => {
-      console.error('Socket connection error:', err.message);
-      // Don't prevent the game from starting despite connection errors
-    });
-
-    socketInstance.on('disconnect', () => {
-      console.log('Disconnected from server');
-      setIsConnected(false);
-      setSocketId(null);
-    });
-
-    // Update players when someone joins
-    socketInstance.on('playerJoined', (player) => {
-      console.log('Player joined:', player);
-      setPlayers(prev => ({
-        ...prev,
-        [player.id]: player
-      }));
-    });
-
-    // Remove player when they leave
-    socketInstance.on('playerLeft', (playerId) => {
-      console.log('Player left:', playerId);
-      setPlayers(prev => {
-        const newPlayers = { ...prev };
-        delete newPlayers[playerId];
-        return newPlayers;
-      });
-    });
-
-    // Update player positions
-    socketInstance.on('playersMoved', (updatedPlayers) => {
-      setPlayers(updatedPlayers);
-    });
-
-    // Handle component collection
-    socketInstance.on('componentCollected', (playerId, componentType) => {
-      console.log(`Player ${playerId} collected component ${componentType}`);
-      setPlayers(prev => {
-        if (!prev[playerId]) return prev;
-        
-        return {
-          ...prev,
-          [playerId]: {
-            ...prev[playerId],
-            collectedComponents: [...prev[playerId].collectedComponents, componentType]
-          }
-        };
-      });
-    });
-
-    // Sync initial state
-    socketInstance.on('syncState', (serverPlayers) => {
-      console.log('Initial state sync:', serverPlayers);
-      setPlayers(serverPlayers);
-    });
-
-    // Set the socket in state
-    setSocket(socketInstance);
-
-    // Clean up on unmount
-    return () => {
-      socketInstance.disconnect();
-    };
+  // No-op functions that don't do anything
+  const joinGame = useCallback((_username: string) => {
+    console.log('Multiplayer disabled, playing in single-player mode');
   }, []);
 
-  // Join the game with a username
-  const joinGame = useCallback((username: string) => {
-    if (socket && isConnected) {
-      socket.emit('joinGame', username);
-    }
-  }, [socket, isConnected]);
+  const updatePlayerPosition = useCallback((_position: any, _rotation: number, _isMoving: boolean, _isJumping: boolean) => {
+    // No-op - multiplayer disabled
+  }, []);
 
-  // Update player movement
-  const updatePlayerPosition = useCallback((
-    position: { x: number; y: number; z: number },
-    rotation: number,
-    isMoving: boolean,
-    isJumping: boolean
-  ) => {
-    if (socket && isConnected) {
-      socket.emit('playerMove', position, rotation, isMoving, isJumping);
-    }
-  }, [socket, isConnected]);
-
-  // Collect a component
-  const collectComponent = useCallback((componentType: string) => {
-    if (socket && isConnected) {
-      socket.emit('collectComponent', componentType);
-    }
-  }, [socket, isConnected]);
+  const collectComponent = useCallback((_componentType: string) => {
+    // No-op - multiplayer disabled
+  }, []);
 
   return {
-    socket,
+    socket: null,
     players,
     isConnected,
     socketId,
